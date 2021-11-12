@@ -1,0 +1,161 @@
+{
+  "dataset_path": "F:/dataset/opensim_spinopelvic/",
+  "dl_dataset": "dataset_training_seg_baseline.p",
+  "gc_dataset": true,
+  "xsensimu_sensor_list_all": ["Hand Left", "Right Hand","PELVIS",
+                              "Right uLEG", "Right lLeg","Right Foot",
+                              "Left uLEG", "Left lLeg", "Left Foot"],
+  "osimimu_sensor_list_all" : ["C7IMU", "T12IMU","PelvisIMU",
+                              "RUpLegIMU", "RLoLegIMU","RFootIMU",
+                              "LUpLegIMU","LLoLegIMU","LFootIMU"],
+  "xsens_imu_header":["acc_g_x", "acc_g_y", "acc_g_z",
+                      "acc_s_x", "acc_s_y", "acc_s_z",
+                      "gyr_g_x", "gyr_g_y", "gyr_g_z",
+                      "gyr_s_x", "gyr_s_y", "gyr_s_z",
+                      "mag_g_x", "mag_g_y", "mag_g_z",
+                      "mag_s_x",  "mag_s_x","mag_s_x",
+                      "euler_g_x","euler_g_y", "euler_g_z",
+                      "euler_s_x","euler_s_x","euler_s_x",
+                      "freeacc_g_x", "freeacc_g_y", "freeacc_g_z",
+                      "freeacc_s_x", "freeacc_s_y", "freeacc_s_z"],
+  "xsensimu_features": ["freeacc_s_x","freeacc_s_y", "freeacc_s_z",
+                        "gyr_s_x", "gyr_s_y", "gyr_s_z"],
+  "xsensimu_sensor_list": ["Hand Left", "Right Hand","PELVIS","Left uLEG", "Right uLEG"],
+  "osimimu_sensor_list" : ["C7IMU","T12IMU","PelvisIMU", "LUpLegIMU","RUpLegIMU"],
+  "imu_sensor_list": ["C7","T12", "P", "LT", "RT"],
+  "train_subjects": ["S09","S10", "S11", "S12", "S13", "S15", "S16", "S17","S21", "S18", "S19","S20",
+                     "S22", "S23", "S25", "S26", "S27"],
+  "segmentation_method": "zeropadding",
+  "target_padding_length": null,
+  "opensim_filter": true,
+  "augmentation_subset": true,
+  "risk_factor_activity": ["STS"],
+  "pt_stand": [0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0],
+  "pt_stand2flexedsit": [1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0],
+
+
+
+  "name": "sweep_spine_pelvic",
+  "method": "grid",
+  "metric":{
+    "name": "test_accuracy",
+    "goal": "minimize",
+  },
+
+  "parameters": {
+    "method":
+      {
+        "distribution": "categorical",
+        "values": ["baseline"]
+      },
+    "selected_data_types":
+      {
+        "distribution": "categorical",
+        "values": [["baseline"]]
+      },
+    "selected_data_status":
+      {
+        "distribution": "categorical",
+        "values": [["imu"]]
+      },
+    "selected_sensors":
+      {
+        "distribution": "categorical",
+        "values": [["C7"], ["T12"], ["P"],
+                   ["C7", "T12"], ["C7", "P"], ["T12", "P"],
+                   ["C7", "T12", "P"], ["P", "LT", "RT"],
+                   ["C7", "T12", "P", "LT", "RT"]]
+      },
+    "selected_opensim_labels":
+      {
+        "distribution": "categorical",
+        "values": [["pelvis_tilt", "L1_L2_IVD_bendjnt_r1", "L2_L3_IVD_bendjnt_r1",
+                    "L3_L4_IVD_bendjnt_r1", "L4_L5_IVD_bendjnt_r1", "flex_extension"]]
+      },
+    "rotation":
+      {
+        "distribution": "categorical",
+        "values": [false]
+      },
+    "test_subjects":
+      {
+        "distribution": "categorical",
+        "values": [[]]
+      },
+    "device":
+      {
+        "distribution": "categorical",
+        "values": ["cpu"]
+      },
+    "feature_reduction":
+      {
+        "distribution": "categorical",
+        "values": [true, false]
+      },
+    "scale":
+      {
+        "distribution": "categorical",
+        "values": [true, false]
+      },
+    "model_name":
+      {
+        "distribution": "categorical",
+        "values": ["svm", "decision_tree", "Neighbors", "logregression"]
+      },
+    "bilstm_hidden_size":
+      {
+        "distribution": "categorical",
+        "values": [32]
+      },
+    "bilstm_num_layers":
+      {
+        "distribution": "categorical",
+        "values": [1]
+      },
+    "bilstm_dropout_p":
+      {
+        "distribution": "categorical",
+        "values": [0.2]
+      },
+    "optimizer_name":
+      {
+        "distribution": "categorical",
+        "values": ["Adam"]
+      },
+    "learning_rate":
+      {
+        "distribution": "categorical",
+        "values": [0.001]
+      },
+    "n_epoch":
+      {
+        "distribution": "categorical",
+        "values": [5]
+      },
+    "batch_size":
+      {
+        "distribution": "categorical",
+        "values": [50]
+      },
+    "loss":
+      {
+        "distribution": "categorical",
+        "values": ["MSE"]
+      },
+    "loss_weight":
+      {
+        "distribution": "categorical",
+        "values": [[1 , 1, 1]]
+      },
+    "nfold":
+      {
+        "distribution": "categorical",
+        "values": [17]
+      },
+    "cv_fold_type":
+      {
+        "distribution": "categorical",
+        "values": ["inter", "intra"]
+      },
+  }
+}

@@ -78,3 +78,9 @@ git pull origin main
                               "RUpLegIMU", "RLoLegIMU","RFootIMU",
                               "LUpLegIMU","LLoLegIMU","LFootIMU"],
   "imu_sensor_list": ["C7","T12", "P", "RT", "RS", "RF", "LT", "LS", "LF"],
+  
+    "train_subjects": ["S09","S10", "S11", "S12", "S13", "S15", "S16", "S17","S18", "S19","S20",
+                     "S21","S22", "S23", "S25", "S26", "S27", "S28", "S29",
+                      "S30", "S31", "S32", "S33", "S34","S35", "S36", "S37", "S38"],
+  "test_subjects": ["S39"],
+  ["Gait", "Stair Up-Down-R","Stair Up-Down-L","STS"],

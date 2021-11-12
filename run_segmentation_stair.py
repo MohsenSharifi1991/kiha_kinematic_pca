@@ -14,27 +14,34 @@ from utils import read_write
 from config import get_config
 config = get_config()
 import numpy as np
+import pickle
 dataset_folder = config['dataset_path']
 ik_setup_main_folder = dataset_folder + 'IKSetups/'
 ik_result_main_folder = dataset_folder + 'IKResults/'
-analyze_setup_main_folder = dataset_folder + 'AnalyzeSetups/'
+analyze_setup_main_folder = dataset_folder + 'AnalyzeSetups'
 analyze_result_main_folder = dataset_folder + 'AnalyzeResults/'
 imu_main_folder = dataset_folder + 'IMU/'
 xsensimu_main_folder = dataset_folder + 'IMUXsens/'
 imuosim_main_folder = dataset_folder + 'IMUOsim/'
 marker_main_molder = dataset_folder + 'Marker/'
-model_main_folder = dataset_folder + 'Models/spinopelvic_kinematic/'
-model_file_suffix = '_scaled_pelvis_marker_adjusted_final_imu.osim'
+dof6_knee = True
+if dof6_knee == True:
+    model_main_folder = dataset_folder + 'Models/6dofknee/'
+    model_file_suffix = '_scaled_adjusted_6dofknee_imu.osim'
+    extension_folder = '_6dofknee'
+    extension_folder = ''
+else:
+    model_main_folder = dataset_folder + 'Models/spinopelvic_kinematic/'
+    model_file_suffix = '_scaled_pelvis_marker_adjusted_final_imu.osim'
+    extension_folder = '_flexlumb'
+
 analyze_setup_file_suffix = '_Setup_AnalyzeTool.xml'
 
 subject_list = ['S09', 'S10', 'S11', 'S12', 'S13', 'S15', 'S16',
                 'S17', 'S18', 'S19', 'S20', 'S21', 'S22', 'S23',
                 'S24', 'S25', 'S26', 'S27', 'S28', 'S29', 'S30',
                 'S31', 'S32', 'S33', 'S34', 'S35', 'S36', 'S37', 'S38', 'S39']
-# subject_list = ['S34']
-
 segmentation_labels = read_write.read_matfile('E:/dataset/kiha/SegmentationIndex/activity_stair_index.mat')
-
 
 ii = 0
 save = False
@@ -44,34 +51,34 @@ for s, subject in enumerate(subject_list):
     # set the file and folder, if not exist, create
     model_file = model_main_folder + subject + model_file_suffix
     ik_setup_file = ik_setup_main_folder + 'KIHA_IKSetUp.xml'
-    analyze_setup_file = analyze_setup_main_folder + '/'+activity+'/baseline_flexlumb/' + subject + analyze_setup_file_suffix
-    ik_result_subject_baseline = ik_result_main_folder + subject + '/'+activity+'/baseline_flexlumb'
-    ik_result_subject_baseline_gc = ik_result_main_folder + subject + '/'+activity+'/baseline_flexlumb_gc'
-    analyze_result_subject_baseline = analyze_result_main_folder + subject + '/'+activity+'/baseline_flexlumb'
-    analyze_result_subject_baseline_gc = analyze_result_main_folder + subject + '/'+activity+'/baseline_flexlumb_gc'
-    xsensimu_result_subject_baseline = xsensimu_main_folder + subject + '/'+activity+'/baseline_flexlumb'
-    xsensimu_result_subject_baseline_gc = xsensimu_main_folder + subject + '/'+activity+'/baseline_flexlumb_gc'
+    analyze_setup_file = analyze_setup_main_folder + '/'+activity+'/baseline' + extension_folder + '/' + subject + analyze_setup_file_suffix
+    ik_result_subject_baseline = ik_result_main_folder + subject + '/'+activity+'/baseline' + extension_folder
+    ik_result_subject_baseline_gc = ik_result_main_folder + subject + '/'+activity+'/baseline' + extension_folder + '_gc'
+    analyze_result_subject_baseline = analyze_result_main_folder + subject + '/'+activity + '/baseline' + extension_folder
+    analyze_result_subject_baseline_gc = analyze_result_main_folder + subject + '/'+activity + '/baseline' + extension_folder + '_gc'
+    xsensimu_result_subject_baseline = xsensimu_main_folder + subject + '/' + activity + '/baseline' + extension_folder
+    xsensimu_result_subject_baseline_gc = xsensimu_main_folder + subject + '/' + activity + '/baseline' + extension_folder + '_gc'
     marker_result_subject = marker_main_molder + subject
 
     if not os.path.exists(ik_result_subject_baseline):
         os.makedirs(ik_result_subject_baseline)
 
-    # if os.path.exists(ik_result_subject_baseline_gc):
-    #     shutil.rmtree(ik_result_subject_baseline_gc)
-    # if not os.path.exists(ik_result_subject_baseline_gc):
-    #     os.makedirs(ik_result_subject_baseline_gc)
+    if os.path.exists(ik_result_subject_baseline_gc):
+        shutil.rmtree(ik_result_subject_baseline_gc)
+    if not os.path.exists(ik_result_subject_baseline_gc):
+        os.makedirs(ik_result_subject_baseline_gc)
 
-    # if not os.path.exists(analyze_result_subject_baseline):
-    #     os.makedirs(analyze_result_subject_baseline)
+    if not os.path.exists(analyze_result_subject_baseline):
+        os.makedirs(analyze_result_subject_baseline)
     # if not os.path.exists(analyze_result_subject_baseline_gc):
     #     os.makedirs(analyze_result_subject_baseline_gc)
 
-    # if not os.path.exists(xsensimu_result_subject_baseline):
-    #     os.makedirs(xsensimu_result_subject_baseline)
-    # if os.path.exists(xsensimu_result_subject_baseline_gc):
-    #     shutil.rmtree(xsensimu_result_subject_baseline_gc)
-    # if not os.path.exists(xsensimu_result_subject_baseline_gc):
-    #     os.makedirs(xsensimu_result_subject_baseline_gc)
+    if not os.path.exists(xsensimu_result_subject_baseline):
+        os.makedirs(xsensimu_result_subject_baseline)
+    if os.path.exists(xsensimu_result_subject_baseline_gc):
+        shutil.rmtree(xsensimu_result_subject_baseline_gc)
+    if not os.path.exists(xsensimu_result_subject_baseline_gc):
+        os.makedirs(xsensimu_result_subject_baseline_gc)
     sides = []
     x_signals = []
     y_signals = []
@@ -88,6 +95,8 @@ for s, subject in enumerate(subject_list):
                 # read imu file
                 xsens_imu_folder = xsensimu_result_subject_baseline + '/' + file[:-7]
                 imus = read_write.read_xsens_imus(xsens_imu_folder)
+                del imus['C7IMU']
+                del imus['T12IMU']
                 for i, sensor in enumerate(imus):
                     imus[sensor] = imus[sensor][0:end_trial]
                 # get the segmentation range
@@ -157,19 +166,19 @@ for s, subject in enumerate(subject_list):
                     # plt.show()
 
 
-                    # # create gc_segmented kinematic folder
-                    # if not os.path.exists(ik_result_subject_baseline_gc):
-                    #     os.makedirs(ik_result_subject_baseline_gc)
-                    # # write new gc_segmented kinematic .mot file
-                    # timeseriesosimtable = read_write.pd_to_osimtimeseriestable(kinematic)
-                    # osim.STOFileAdapter().write(timeseriesosimtable, ik_result_subject_baseline_gc + '/' + file[:-4] + '_C' + str(
-                    #                                 c) + '.mot')
-                    #
-                    # # create xsens imu folder and write
-                    # xsensimu_result_subject_baseline_gc_trial = xsensimu_result_subject_baseline_gc + '/' + file[:-7]+ '_C' + str(c)
-                    # if not os.path.exists(xsensimu_result_subject_baseline_gc_trial):
-                    #     os.makedirs(xsensimu_result_subject_baseline_gc_trial)
-                    # simulatedata.export_simulated_imu(imu, xsensimu_result_subject_baseline_gc_trial)
+                    # create gc_segmented kinematic folder
+                    if not os.path.exists(ik_result_subject_baseline_gc):
+                        os.makedirs(ik_result_subject_baseline_gc)
+                    # write new gc_segmented kinematic .mot file
+                    timeseriesosimtable = read_write.pd_to_osimtimeseriestable(kinematic)
+                    osim.STOFileAdapter().write(timeseriesosimtable, ik_result_subject_baseline_gc + '/' + file[:-4] + '_C' + str(
+                                                    c) + '.mot')
+
+                    # create xsens imu folder and write
+                    xsensimu_result_subject_baseline_gc_trial = xsensimu_result_subject_baseline_gc + '/' + file[:-7]+ '_C' + str(c)
+                    if not os.path.exists(xsensimu_result_subject_baseline_gc_trial):
+                        os.makedirs(xsensimu_result_subject_baseline_gc_trial)
+                    simulatedata.export_simulated_imu(imu, xsensimu_result_subject_baseline_gc_trial)
 
                     # fill updated segmentation label
                     segmentation_labels_dic = segmentation_labels[(segmentation_labels['subject_num'] == subject) & (segmentation_labels['trial_num'] == file[0:5])].copy()

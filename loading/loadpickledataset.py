@@ -105,10 +105,20 @@ class LoadPickleDataSet:
         subset_labels = pd.concat([label[label['types'] == 'baseline'], subset_labels])
         return subset_labels
 
+    def rename_stair_activity(self):
+        self.selected_y_labels['activity'][
+            (self.selected_y_labels['activity'].str.contains('Stair')) &
+            (self.selected_y_labels['trial_num'].str.contains('_1'))] = 'Stair Ascent'
+        self.selected_y_labels['activity'][
+            (self.selected_y_labels['activity'].str.contains('Stair')) &
+            (self.selected_y_labels['trial_num'].str.contains('_2'))] = 'Stair Descent'
+
+
     def run_get_dataset(self):
         self.load_dataset()
         self.get_y_data()
         self.get_x_data()
+        self.rename_stair_activity()
         selected_labels = self.selected_y_labels
         selected_labels['rotation'] = 'False'
         del self.dataset

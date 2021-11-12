@@ -4,5 +4,6 @@ caches
 *.log
 __pychae__
 __pycache__
+*.mp4
 
 

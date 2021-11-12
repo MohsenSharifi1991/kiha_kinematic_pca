@@ -26,7 +26,7 @@ model_main_folder = config['dataset_path'] + 'Models/'
 notesheet_main_folder = config['dataset_path'] + 'NoteSheet/'
 segmentation_index = config['dataset_path'] + 'SegmentationIndex/'
 dl_labels = segmentation_index + 'activity_index_v2_all_table_updatedLL.csv'
-gait_labels = segmentation_index + 'nn_label_segmentation_gc_ik_all_with_gc.pkl'
+gait_labels = segmentation_index + 'nn_label_segmentation_gc_ik_all_with_gc_updateS10S21side.pkl'
 stair_labels = segmentation_index + 'activity_stair_index_with_gc.pkl'
 information_subject_labels = config['dataset_path']+'Informations_Subject.xlsx'
 
@@ -170,6 +170,15 @@ class ReadIK:
                 else:
                     baseline = '/baseline'
                     folder_extention = '_seg'
+                # if activity == 'gait':
+                #     baseline = '/baseline_update'
+                #     folder_extention = '_gc'
+                # elif activity == 'stair':
+                #     baseline = '/baseline'
+                #     folder_extention = '_gc'
+                # else:
+                #     baseline = '/baseline_6dofknee'
+                #     folder_extention = '_seg'
                 ik_result_subject_baseline = ik_result_main_folder + subject + '/' + activity + baseline+ folder_extention
                 for (dirpath, dirnames, filenames) in os.walk(ik_result_subject_baseline):
                     for file in filenames:
@@ -280,6 +289,15 @@ class ReadIMU:
                 else:
                     baseline = '/baseline'
                     folder_extention = '_seg'
+                # if activity == 'gait':
+                #     baseline = '/baseline_update'
+                #     folder_extention = '_gc'
+                # elif activity == 'stair':
+                #     baseline = '/baseline'
+                #     folder_extention = '_gc'
+                # else:
+                #     baseline = '/baseline_6dofknee'
+                #     folder_extention = '_seg'
                 imu_subject = imuxsens_main_folder + subject + '/' + activity + baseline + folder_extention
                 print(subject)
                 print(activity)
@@ -359,9 +377,9 @@ start_time = time.time()
 sensor_list = config['imu_sensor_list']
 augmentation_methods = ['magoffset', 'magwarp', 'magwarpoffset', 'timewarp', 'combined_timewarp_magwrap']
 subject_list = ["S09", "S10", "S11", "S12", "S13", "S15", "S16", "S17","S18", "S19","S20",
-                     "S21","S22", "S23", "S25", "S26", "S27", "S28", "S29",
+                     "S21","S22", "S23","S24", "S25", "S26", "S27", "S28", "S29",
                       "S30", "S31", "S32", "S33", "S34", "S35", "S36", "S37", "S38", "S39"]
-# subject_list = ["S09"]
+# subject_list = ["S24"]
 activity_list = ['gait', 'stair', 'lunge', 'sts', 'rom']
 # activity_list = ['gait']
 datatype_list = ['imu', 'ik']

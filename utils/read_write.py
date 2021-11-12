@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import opensim as osim
 from config import get_config
-from scipy.io import loadmat
+from scipy.io import loadmat, savemat
 from utils import filter
 
 config = get_config()
@@ -164,6 +164,10 @@ def read_matfile(filename):
     data_values = data[1:, :]
     df = pd.DataFrame(data=data_values, columns=headers)
     return df
+
+
+def write_matfile(filename, data):
+    savemat(filename, data)
 
 
 def read_trc(trc_filename):

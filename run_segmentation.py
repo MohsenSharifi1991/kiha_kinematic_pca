@@ -32,27 +32,36 @@ marker_main_molder = dataset_folder + 'Marker/'
 model_main_folder = dataset_folder + 'Models/spinopelvic_kinematic/'
 model_file_suffix = '_scaled_pelvis_marker_adjusted_final_imu.osim'
 analyze_setup_file_suffix = '_Setup_AnalyzeTool.xml'
+dof6_knee = True
+if dof6_knee == True:
+    model_main_folder = dataset_folder + 'Models/6dofknee/'
+    model_file_suffix = '_scaled_adjusted_6dofknee_imu.osim'
+    extension_folder = '_6dofknee'
+    # extension_folder = ''
+else:
+    model_main_folder = dataset_folder + 'Models/spinopelvic_kinematic/'
+    model_file_suffix = '_scaled_pelvis_marker_adjusted_final_imu.osim'
+    extension_folder = '_flexlumb'
 
-
-if os.path.exists('activity_index_v2_all_table_updatedLL.csv'):
-    segmentation_labels = pd.read_csv('activity_index_v2_all_table_updatedLL.csv')
+if os.path.exists('E:/dataset/kiha/SegmentationIndex/activity_index_v2_all_table_updatedLL.csv'):
+    segmentation_labels = pd.read_csv('E:/dataset/kiha/SegmentationIndex/activity_index_v2_all_table_updatedLL.csv')
     segmentation_labels = segmentation_labels.sort_values(by='subject_num')
 
 subject_list = segmentation_labels['subject_num'].unique()
-activity = 'lunge'
+activity = 'rom'
 segments = []
 for s, subject in enumerate(subject_list):
     print(subject)
     # set the file and folder, if not exist, create
     model_file = model_main_folder + subject + model_file_suffix
-    ik_setup_file = ik_setup_main_folder +'KIHA_IKSetUp.xml'
-    analyze_setup_file = analyze_setup_main_folder + activity + '/baseline/' + subject + analyze_setup_file_suffix
-    ik_result_subject_baseline = ik_result_main_folder + subject + '/' + activity + '/baseline'
-    ik_result_subject_baseline_seg = ik_result_main_folder + subject + '/' + activity + '/baseline_seg'
-    analyze_result_subject_baseline = analyze_result_main_folder + subject + '/' + activity + '/baseline'
-    analyze_result_subject_baseline_seg = analyze_result_main_folder + subject + '/' + activity+ '/baseline_seg'
-    xsensimu_result_subject_baseline = xsensimu_main_folder + subject + '/' + activity + '/baseline'
-    xsensimu_result_subject_baseline_seg = xsensimu_main_folder + subject + '/' + activity + '/baseline_seg'
+    ik_setup_file = ik_setup_main_folder + 'KIHA_IKSetUp.xml'
+    analyze_setup_file = analyze_setup_main_folder +activity+'/baseline' + extension_folder + '/' + subject + analyze_setup_file_suffix
+    ik_result_subject_baseline = ik_result_main_folder + subject + '/'+activity+'/baseline' + extension_folder
+    ik_result_subject_baseline_seg = ik_result_main_folder + subject + '/'+activity+'/baseline' + extension_folder + '_seg'
+    analyze_result_subject_baseline = analyze_result_main_folder + subject + '/'+activity + '/baseline' + extension_folder
+    analyze_result_subject_baseline_seg = analyze_result_main_folder + subject + '/'+activity + '/baseline' + extension_folder + '_seg'
+    xsensimu_result_subject_baseline = xsensimu_main_folder + subject + '/' + activity + '/baseline' + extension_folder
+    xsensimu_result_subject_baseline_seg = xsensimu_main_folder + subject + '/' + activity + '/baseline' + extension_folder + '_seg'
     marker_result_subject = marker_main_molder + subject + '/' + activity
 
 
@@ -97,6 +106,8 @@ for s, subject in enumerate(subject_list):
                 imus = read_write.read_xsens_imus(xsens_imu_folder)
                 for i, sensor in enumerate(imus):
                     imus[sensor] = imus[sensor]
+                del imus['C7IMU']
+                del imus['T12IMU']
                 # get the segmentation range
                 segmentation_s = segmentation_labels.segmentation_start[
                     (segmentation_labels['subject_num']==subject) &

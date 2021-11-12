@@ -8,7 +8,6 @@ def get_config():
         config = json.load(f)
     return config
 
-
 def get_config_hip():
     with open('./configs/config_hip.json') as f:
     # with open('F:/codes/python/opensim_trial/configs/config.json') as f:

@@ -9,7 +9,7 @@ from preprocessing.segmentation.fixwindowsegmentation import FixWindowSegmentati
 # from preprocessing.segmentation.gaitcyclesegmentation import GaitCycleSegmentation
 from preprocessing.segmentation.timenormalizedsegmentation import TimeNormalizedSegmentation
 from preprocessing.segmentation.zeropaddingsegmentation import ZeroPaddingSegmentation
-
+import pandas as pd
 
 class KIHADataSet:
     def __init__(self, config):
@@ -118,4 +118,34 @@ class KIHADataSet:
         del train_labels, test_labels
         return self.train_dataset,  self.test_dataset
 
+    def run_combine_train_test_dataset(self):
+        kihadataset_train, kihadataset_test = self.run_dataset_split()
+        # combine train and test data
+        kihadataset_train['x'] = np.concatenate([kihadataset_train['x'], kihadataset_test['x']])
+        kihadataset_train['y'] = np.concatenate([kihadataset_train['y'], kihadataset_test['y']])
+        kihadataset_train['labels'] = pd.concat([kihadataset_train['labels'], kihadataset_test['labels']]).reset_index(
+            drop=True)
+        return kihadataset_train
 
+    def filter_data_based_on_side(self, data, selected_side='R'):
+        kihadataset_train_all = data.copy()
+        kihadataset_train_all['labels']['tka_side'] = len(kihadataset_train_all['labels']) * ['Nan']
+        kihadataset_train_all['labels']['tka_side'][kihadataset_train_all['labels']['KNEE Status'] == 'BiTKA'] = 'BiTKA'
+        kihadataset_train_all['labels']['tka_side'][(kihadataset_train_all['labels']['KNEE Status'] == 'TKA') &
+                                                    (kihadataset_train_all['labels'][
+                                                         '1-Knee Implant L'] == 'Yes')] = 'LTKA'
+        kihadataset_train_all['labels']['tka_side'][(kihadataset_train_all['labels']['KNEE Status'] == 'TKA') &
+                                                    (kihadataset_train_all['labels'][
+                                                         '1-Knee Implant R'] == 'Yes')] = 'RTKA'
+        # left or side selection method:
+        # 1) Left or Right
+        selected_side = selected_side
+        affected_knee = False
+        kihadataset_train_all['y'] = kihadataset_train_all['y'][kihadataset_train_all['labels'][
+            (kihadataset_train_all['labels']['side_seg'] == selected_side) |
+            (kihadataset_train_all['labels']['side_seg'].isnull())].index.to_list()]
+        kihadataset_train_all['labels'] = kihadataset_train_all['labels'][
+            (kihadataset_train_all['labels']['side_seg'] == selected_side)|
+            (kihadataset_train_all['labels']['side_seg'].isnull())
+            ].reset_index(drop=True)
+        return kihadataset_train_all
