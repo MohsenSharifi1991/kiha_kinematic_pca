@@ -1,0 +1,12 @@
+matplotlib
+numpy
+pandas
+
+scipy
+tslearn
+scikit-learn
+transforms3d
+
+seaborn
+
+umap-learn

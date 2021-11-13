@@ -28,14 +28,14 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn import linear_model
 import wandb
-
+import pickle as pk
 import seaborn as sns
 wandb.init(project='kia_kinematic_pca')
 
 export_csv = False
 export_xlsx = False
-scatter_pairplot = True
-
+scatter_pairplot = False
+pca_save = False
 
 def run_main():
     np.random.seed(42)
@@ -110,7 +110,9 @@ def run_main():
 
         # run pca over kinematics and display relevant plots over kinematics
         pcanalysis_handler = PCAnalysis(config, kinematics, config['target_padding_length'], pc_variance=0.75)
-        _, kinematic_pcs_comp, kinematic_pcs_loading, pca_variance_ratio, kinematic_pcs_transformed = pcanalysis_handler.apply_pca()
+        kinematics_pca, kinematic_pcs_comp, kinematic_pcs_loading, pca_variance_ratio, kinematic_pcs_transformed = pcanalysis_handler.apply_pca()
+        if pca_save:
+            pk.dump(kinematics_pca, open('./cache/pca_' + activity + '.pkl', 'wb'))
         pcanalysis_handler.display_pca_variance_ratio(title=activity, wandb_plot=True)
         mode_variations = pcanalysis_handler.form_mode_variations(n_mode=len(kinematic_pcs_comp), std_factor=2)
         # pcanalysis_handler.display_pcs_mode_profile(n_mode=len(kinematic_pcs_comp), std_factor=2, title=activity, wandb_plot=True)      # plot pc mode profiles

@@ -2,15 +2,17 @@ import pandas as pd
 import numpy as np
 import pickle as pk
 from sklearn.preprocessing import StandardScaler
+
 scaler_save = True
 activity_densities_save = True
 pcs = pd.read_csv('./result/all_pca_patient_variables_singlegait.csv')
 pcs_std = pcs.copy()
+
 activities = ['Gait', 'Stair Ascent', 'Stair Descent', 'STS']
 activity_densities = {'Gait':{}, 'Stair Ascent':{}, 'Stair Descent':{}, 'STS':{}}
 for a, activity in enumerate(activities):
     # calculated density function of PCs per activity
-    pcs_columns = [c for c in pcs.columns if 'Gait' in c]
+    pcs_columns = [c for c in pcs.columns if activity in c]
     scaler = StandardScaler().fit(pcs[pcs_columns])
     pcs_std[pcs_columns] = scaler.fit_transform(pcs[pcs_columns])
     oa_mu = np.mean(pcs_std[pcs_columns][pcs_std['knee'] == 'OA']).values

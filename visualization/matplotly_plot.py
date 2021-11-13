@@ -293,6 +293,25 @@ def multicolor_pc_line(pca_comp_abs, kinematic_mean, plt_title):
     plt.show()
 
 
+def plot_kinematics(data, dof_labels, activity, range_len, wandb_plot=True):
+    plt.figure(figsize=(10, 8))
+    n_kinematic = len(dof_labels)
+    c = 2
+    for i, kinematic_label in enumerate(dof_labels):
+        plt.subplot(round(n_kinematic / c), c, i + 1)
+        len_data = range(i * range_len, i * range_len + range_len)
+        for j in data:
+            plt.plot(np.arange(0, len(len_data)), j[len_data])
+        if i == 1:
+            plt.legend(bbox_to_anchor=(1.04, 1), borderaxespad=0)
+        plt.ylabel(kinematic_label + ' (deg)')
+    plt.suptitle(activity, fontsize=16)
+    plt.subplots_adjust(right=0.8)
+    if wandb_plot:
+        wandb.log({"kinematics": [wandb.Image(plt, caption=activity)]})
+    else:
+        plt.show()
+
 def plot_kinematics_mean_std(data, knee_index, dof_labels, activity, range_len, wandb_plot=True):
     # plt.figure()
     plt.figure(figsize=(10, 8))
@@ -730,7 +749,7 @@ def plot_cluster_dtw(timeseries_df, cluster_method, dof_labels, range_len, title
         show_ts_label = lambda idx: "ts-" + str(idx)
         model.plot(axes=ax, show_ts_label=show_ts_label,
                    show_tr_label=True, ts_label_margin=-10,
-                   ts_left_margin=10, ts_sample_length=1)
+                   ts_left_margin=10, ts_sample_length=2)
         plt.tight_layout()
 
     else:
