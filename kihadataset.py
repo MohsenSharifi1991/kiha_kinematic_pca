@@ -1,5 +1,4 @@
 import itertools
-
 import numpy as np
 from loading.loadpickledataset import LoadPickleDataSet
 from preprocessing.augmentation.gaussiannoise import GaussianNoise
@@ -10,6 +9,9 @@ from preprocessing.segmentation.fixwindowsegmentation import FixWindowSegmentati
 from preprocessing.segmentation.timenormalizedsegmentation import TimeNormalizedSegmentation
 from preprocessing.segmentation.zeropaddingsegmentation import ZeroPaddingSegmentation
 import pandas as pd
+
+from visualization.matplotly_plot import plot_kinematic_3d
+
 
 class KIHADataSet:
     def __init__(self, config):
@@ -65,7 +67,39 @@ class KIHADataSet:
             self.x, self.y, self.labels = gaussian_noise_handler.run_add_noise(self.x, self.y, self.labels)
         del x, y, labels
 
+        # self.x, self.y, self.labels = self.run_outlier_kinematic(self.x, self.y, self.labels)
         self.run_dataset_filter_riskfactor()
+
+    def run_outlier_kinematic(self, x, y, label):
+        updated_x = []
+        updated_y = []
+        updated_label = []
+        for activity in ['Gait', 'Stair Ascent', 'Stair Descent', 'STS']:
+            label_temp = label.copy()
+            activity_index = label_temp[(label_temp['activity']== activity)&(label_temp['side_seg']=='R')].index.values
+            label_temp = label_temp[(label_temp['activity']== activity)&(label_temp['side_seg']=='R')].reset_index(drop=True)
+            x_temp = x[activity_index]
+            y_temp = y[activity_index]
+            plot_kinematic_3d(y_temp, 'pre_outliter_'+activity)
+            if activity == 'Gait':
+                outlier = (y_temp[:, np.arange(0, 15, 1), 3].mean(axis=1) < 0) | \
+                          (y_temp[:, np.arange(15, 40, 1), 1].max(axis=1) > 9)
+            elif activity == 'Stair Ascent':
+                outlier = (y_temp[:, np.arange(0, 15, 1), 1].min(axis=1) < -20) | \
+                          (y_temp[:, np.arange(20, 60, 1), 2].min(axis=1) < -20)
+            elif activity == 'Stair Descent':
+                outlier = (y_temp[:, np.arange(0, 15, 1), 0].min(axis=1) < -20) | \
+                          (y_temp[:, np.arange(0, 40, 1), 2].min(axis=1) < -20) | \
+                              (y_temp[:, np.arange(80, 100, 1), 2].max(axis=1) > 30)
+            elif activity == 'STS':
+                outlier = y_temp[:, np.arange(0, 20, 1), 6].min(axis=1) < 50
+
+            updated_label.append(label_temp[~outlier].reset_index(drop=True))
+            updated_x.append(x_temp[~outlier])
+            updated_y.append(y_temp[~outlier])
+            plot_kinematic_3d(y_temp[~outlier], 'post_outliter_' + activity)
+        return np.vstack(updated_x), np.vstack(updated_y), pd.concat(updated_label, axis=0).reset_index(drop=True)
+
 
     def run_outlier_short_long_sample(self, x, y, label, min_sample_length=50, max_sample_length=200):
         sample_to_be_remove = []
@@ -88,6 +122,7 @@ class KIHADataSet:
         self.x = self.x[dataset_index]
         self.y = self.y[dataset_index]
         self.labels = self.labels.reset_index(drop=True)
+
 
     def run_dataset_split(self):
         if set(self.test_subjects).issubset(self.train_subjects):
@@ -118,6 +153,7 @@ class KIHADataSet:
         del train_labels, test_labels
         return self.train_dataset,  self.test_dataset
 
+
     def run_combine_train_test_dataset(self):
         kihadataset_train, kihadataset_test = self.run_dataset_split()
         # combine train and test data
@@ -126,6 +162,7 @@ class KIHADataSet:
         kihadataset_train['labels'] = pd.concat([kihadataset_train['labels'], kihadataset_test['labels']]).reset_index(
             drop=True)
         return kihadataset_train
+
 
     def filter_data_based_on_side(self, data, selected_side='R'):
         kihadataset_train_all = data.copy()

@@ -3,8 +3,8 @@ import json
 import yaml
 
 
-def get_config():
-    with open('./configs/config.json') as f:
+def get_config(config_name):
+    with open(f'./configs/{config_name}.json') as f:
     # with open('F:/codes/python/opensim_trial/configs/config.json') as f:
         config = json.load(f)
     return config

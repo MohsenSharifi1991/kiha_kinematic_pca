@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from dataclasses import dataclass
 import time
 import numpy as np
-config = get_config()
+config = get_config(config_name='config_6dofknee')
 if config['gc_dataset'] == True:
     folder_extention = '_seg'
 else:
@@ -25,7 +25,7 @@ marker_main_molder = config['dataset_path'] + 'Marker/'
 model_main_folder = config['dataset_path'] + 'Models/'
 notesheet_main_folder = config['dataset_path'] + 'NoteSheet/'
 segmentation_index = config['dataset_path'] + 'SegmentationIndex/'
-dl_labels = segmentation_index + 'activity_index_v2_all_table_updatedLL.csv'
+dl_labels = segmentation_index + 'activity_index_v4_all_table_updatedLL.csv'
 gait_labels = segmentation_index + 'nn_label_segmentation_gc_ik_all_with_gc_updateS10S21side.pkl'
 stair_labels = segmentation_index + 'activity_stair_index_with_gc.pkl'
 information_subject_labels = config['dataset_path']+'Informations_Subject.xlsx'
@@ -102,6 +102,7 @@ class ReadIK:
         ranges = []
         trial_num_segs = []
         for i in range(len(lunge_sts_rom_labels_df)):
+            print(i)
             seg_start = lunge_sts_rom_labels_df.iloc[i][['segmentation_start']].values[0]
             seg_end = lunge_sts_rom_labels_df.iloc[i][['segmentation_end']].values[0]
             trial_num = lunge_sts_rom_labels_df.iloc[i][['trial_num']].values[0]
@@ -164,22 +165,22 @@ class ReadIK:
         for subject in self.subject_list:
             for activity in self.activity_list:
                 notesheet = self.read_notesheet(subject)
-                if activity == 'gait' or activity == 'stair':
-                    baseline = '/baseline_flexlumb'
-                    folder_extention = '_gc'
-                else:
-                    baseline = '/baseline'
-                    folder_extention = '_seg'
-                # if activity == 'gait':
-                #     baseline = '/baseline_update'
-                #     folder_extention = '_gc'
-                # elif activity == 'stair':
-                #     baseline = '/baseline'
+                # if activity == 'gait' or activity == 'stair':
+                #     baseline = '/baseline_flexlumb'
                 #     folder_extention = '_gc'
                 # else:
-                #     baseline = '/baseline_6dofknee'
+                #     baseline = '/baseline'
                 #     folder_extention = '_seg'
-                ik_result_subject_baseline = ik_result_main_folder + subject + '/' + activity + baseline+ folder_extention
+                if activity == 'gait':
+                    baseline = '/baseline_update'
+                    folder_extention = '_gc'
+                elif activity == 'stair':
+                    baseline = '/baseline'
+                    folder_extention = '_gc'
+                else:
+                    baseline = '/baseline_6dofknee'
+                    folder_extention = '_seg'
+                ik_result_subject_baseline = ik_result_main_folder + subject + '/' + activity + baseline + folder_extention
                 for (dirpath, dirnames, filenames) in os.walk(ik_result_subject_baseline):
                     for file in filenames:
                         if file.endswith('.mot'):
@@ -273,7 +274,7 @@ class ReadIMU:
         imu = {}
         self.labels = imu_kinematic_label
         self.read_xsens_imu()
-        # self.read_osim_imu_baseline()
+        self.read_osim_imu_baseline()
         # self.read_osim_imu_augmented()
         imu['labels'] = self.imu_labels
         imu['values'] = self.imu_values
@@ -283,21 +284,21 @@ class ReadIMU:
         c = 0
         for subject in self.subject_list:
             for activity in self.activity_list:
-                if activity == 'gait' or activity == 'stair':
-                    baseline = '/baseline_flexlumb'
-                    folder_extention = '_gc'
-                else:
-                    baseline = '/baseline'
-                    folder_extention = '_seg'
-                # if activity == 'gait':
-                #     baseline = '/baseline_update'
-                #     folder_extention = '_gc'
-                # elif activity == 'stair':
-                #     baseline = '/baseline'
+                # if activity == 'gait' or activity == 'stair':
+                #     baseline = '/baseline_flexlumb'
                 #     folder_extention = '_gc'
                 # else:
-                #     baseline = '/baseline_6dofknee'
+                #     baseline = '/baseline'
                 #     folder_extention = '_seg'
+                if activity == 'gait':
+                    baseline = '/baseline_update'
+                    folder_extention = '_gc'
+                elif activity == 'stair':
+                    baseline = '/baseline'
+                    folder_extention = '_gc'
+                else:
+                    baseline = '/baseline_6dofknee'
+                    folder_extention = '_seg'
                 imu_subject = imuxsens_main_folder + subject + '/' + activity + baseline + folder_extention
                 print(subject)
                 print(activity)
@@ -334,22 +335,58 @@ class ReadIMU:
                             self.counter = self.counter + 1
 
     def read_osim_imu_baseline(self):
+        c = 0
         for subject in self.subject_list:
-            osimimu_subject_baseline = imuosim_main_folder + subject + '/baseline'+folder_extention
-            for (trial_dirpath, trail_dirnames, trialnames) in os.walk(osimimu_subject_baseline):
-                for trial in trail_dirnames:
-                    osimimu_baseline_subject_trial = osimimu_subject_baseline + '/' + trial
-                    for s, sensor in enumerate(self.config['osimimu_sensor_list']):
-                        imu = read_write.read_osim_imu(osimimu_baseline_subject_trial + '/' + sensor + '.txt')
-                        split_index, imu = self.update_imu(self.counter, imu)
-                        self.imu_values.append(imu)
-                        self.imu_subjects.append(subject)
-                        self.imu_sensors.append(self.imu_sensor_list[s])
-                        self.imu_status.append('osimimu')
-                        self.imu_types.append('baseline')
-                        self.imu_trials.append(trial.replace('_IK', ''))
-                        self.imu_turn_indexes.append(split_index)
-                    self.counter = self.counter + 1
+            for activity in self.activity_list:
+                # if activity == 'gait' or activity == 'stair':
+                #     baseline = '/baseline_flexlumb'
+                #     folder_extention = '_gc'
+                # else:
+                #     baseline = '/baseline'
+                #     folder_extention = '_seg'
+                if activity == 'gait':
+                    baseline = '/baseline_update'
+                    folder_extention = '_gc'
+                elif activity == 'stair':
+                    baseline = '/baseline'
+                    folder_extention = '_gc'
+                else:
+                    baseline = '/baseline_6dofknee'
+                    folder_extention = '_seg'
+                osimimu_subject = imuosim_main_folder + subject + '/' + activity + baseline + folder_extention
+                print(subject)
+                print(activity)
+                for (trial_dirpath, trail_dirnames, trialnames) in os.walk(osimimu_subject):
+                    for trial in trail_dirnames:
+                        osimimu_baseline_subject_trial = osimimu_subject + '/' + trial
+                        for s, sensor in enumerate(self.config['osimimu_sensor_list']):
+                            if config['gc_dataset'] == True:
+                                imu = read_write.read_osim_imu(osimimu_baseline_subject_trial + '/' + sensor + '.txt')
+                            else:
+                                imu = read_write.read_osim_imu(osimimu_baseline_subject_trial + '/' + sensor + '.txt')
+                                imu = imu[self.config['xsensimu_features']]
+                            # imu = read_write.read_osim_imu(osimimu_baseline_subject_trial + '/' + sensor + '.txt')
+                            # split_index, imu = self.update_imu(self.counter, imu)
+                            self.imu_values.append(imu)
+                            # self.imu_subjects.append(subject)
+                            # self.imu_sensors.append(self.imu_sensor_list[s])
+                            # self.imu_status.append('osimimu')
+                            self.imu_types.append('baseline')
+                            # self.imu_trials.append(trial.replace('_IK', ''))
+                            # self.imu_turn_indexes.append(split_index)
+                            if 'IK' not in trial:
+                                trial = trial.replace('_C', '_IK_C')
+                            imu_label_temp = self.labels[(self.labels['subject_num'] == subject) & (
+                                    self.labels['trial_num_seg'] == trial)].copy()
+                            imu_label_temp['kinematic_status'] = 'osimimu'
+                            imu_label_temp['kinematic_types'] = 'baseline'
+                            imu_label_temp['sensors'] = self.imu_sensor_list[s]
+                            # if c == 0:
+                            #     self.imu_labels = imu_label_temp.copy()
+                            # else:
+                            self.imu_labels = self.imu_labels.append(imu_label_temp)
+                            # c += 1
+                        self.counter = self.counter + 1
 
     def read_osim_imu_augmented(self):
         for subject in self.subject_list:
@@ -379,10 +416,10 @@ augmentation_methods = ['magoffset', 'magwarp', 'magwarpoffset', 'timewarp', 'co
 subject_list = ["S09", "S10", "S11", "S12", "S13", "S15", "S16", "S17","S18", "S19","S20",
                      "S21","S22", "S23","S24", "S25", "S26", "S27", "S28", "S29",
                       "S30", "S31", "S32", "S33", "S34", "S35", "S36", "S37", "S38", "S39"]
-# subject_list = ["S24"]
+# subject_list = ["S09", "S10"]
 activity_list = ['gait', 'stair', 'lunge', 'sts', 'rom']
-# activity_list = ['gait']
-datatype_list = ['imu', 'ik']
+activity_list = ['gait', 'stair']
+datatype_list = ['imu', 'osimimu', 'ik']
 read_ik_handler = ReadIK(config, subject_list, augmentation_methods, activity_list)
 kinematic = read_ik_handler.read_ik_all()
 read_imu_handler = ReadIMU(config, kinematic['labels'], subject_list, augmentation_methods, activity_list)

@@ -11,6 +11,7 @@ here: F:\codes\matlab\opensim_spinopelvic
 import shutil
 import opensim as osim
 import pandas as pd
+import numpy as np
 import os
 from opensim_processing.opensim_simulation import SimulateData
 from utils import read_write
@@ -32,7 +33,7 @@ marker_main_molder = dataset_folder + 'Marker/'
 model_main_folder = dataset_folder + 'Models/spinopelvic_kinematic/'
 model_file_suffix = '_scaled_pelvis_marker_adjusted_final_imu.osim'
 analyze_setup_file_suffix = '_Setup_AnalyzeTool.xml'
-dof6_knee = True
+dof6_knee = False
 if dof6_knee == True:
     model_main_folder = dataset_folder + 'Models/6dofknee/'
     model_file_suffix = '_scaled_adjusted_6dofknee_imu.osim'
@@ -41,15 +42,17 @@ if dof6_knee == True:
 else:
     model_main_folder = dataset_folder + 'Models/spinopelvic_kinematic/'
     model_file_suffix = '_scaled_pelvis_marker_adjusted_final_imu.osim'
-    extension_folder = '_flexlumb'
+    # extension_folder = '_flexlumb' # for gait
+    extension_folder = '' # for sts, rom, lunge
 
-if os.path.exists('E:/dataset/kiha/SegmentationIndex/activity_index_v2_all_table_updatedLL.csv'):
-    segmentation_labels = pd.read_csv('E:/dataset/kiha/SegmentationIndex/activity_index_v2_all_table_updatedLL.csv')
+if os.path.exists('H:/dataset/kiha/SegmentationIndex/activity_index_v5_all_table_updatedLL_STS30Sec.csv'):
+    segmentation_labels = pd.read_csv('H:/dataset/kiha/SegmentationIndex/activity_index_v5_all_table_updatedLL_STS30Sec.csv')
     segmentation_labels = segmentation_labels.sort_values(by='subject_num')
 
 subject_list = segmentation_labels['subject_num'].unique()
-activity = 'rom'
+activity = 'sts'
 segments = []
+# subject_list=subject_list[14:]
 for s, subject in enumerate(subject_list):
     print(subject)
     # set the file and folder, if not exist, create
@@ -64,30 +67,30 @@ for s, subject in enumerate(subject_list):
     xsensimu_result_subject_baseline_seg = xsensimu_main_folder + subject + '/' + activity + '/baseline' + extension_folder + '_seg'
     marker_result_subject = marker_main_molder + subject + '/' + activity
 
-
-    if not os.path.exists(ik_result_subject_baseline):
-        os.makedirs(ik_result_subject_baseline)
-
-    if os.path.exists(ik_result_subject_baseline_seg):
-        shutil.rmtree(ik_result_subject_baseline_seg)
-    if not os.path.exists(ik_result_subject_baseline_seg):
-        os.makedirs(ik_result_subject_baseline_seg)
-
-    if not os.path.exists(analyze_result_subject_baseline):
-        os.makedirs(analyze_result_subject_baseline)
-
-    if os.path.exists(analyze_result_subject_baseline_seg):
-        shutil.rmtree(analyze_result_subject_baseline_seg)
-    if not os.path.exists(analyze_result_subject_baseline_seg):
-        os.makedirs(analyze_result_subject_baseline_seg)
-
-    if not os.path.exists(xsensimu_result_subject_baseline):
-        os.makedirs(xsensimu_result_subject_baseline)
-
-    if os.path.exists(xsensimu_result_subject_baseline_seg):
-        shutil.rmtree(xsensimu_result_subject_baseline_seg)
-    if not os.path.exists(xsensimu_result_subject_baseline_seg):
-        os.makedirs(xsensimu_result_subject_baseline_seg)
+    #
+    # if not os.path.exists(ik_result_subject_baseline):
+    #     os.makedirs(ik_result_subject_baseline)
+    #
+    # if os.path.exists(ik_result_subject_baseline_seg):
+    #     shutil.rmtree(ik_result_subject_baseline_seg)
+    # if not os.path.exists(ik_result_subject_baseline_seg):
+    #     os.makedirs(ik_result_subject_baseline_seg)
+    #
+    # if not os.path.exists(analyze_result_subject_baseline):
+    #     os.makedirs(analyze_result_subject_baseline)
+    #
+    # if os.path.exists(analyze_result_subject_baseline_seg):
+    #     shutil.rmtree(analyze_result_subject_baseline_seg)
+    # if not os.path.exists(analyze_result_subject_baseline_seg):
+    #     os.makedirs(analyze_result_subject_baseline_seg)
+    #
+    # if not os.path.exists(xsensimu_result_subject_baseline):
+    #     os.makedirs(xsensimu_result_subject_baseline)
+    #
+    # if os.path.exists(xsensimu_result_subject_baseline_seg):
+    #     shutil.rmtree(xsensimu_result_subject_baseline_seg)
+    # if not os.path.exists(xsensimu_result_subject_baseline_seg):
+    #     os.makedirs(xsensimu_result_subject_baseline_seg)
     sides = []
     x_signals = []
     y_signals = []
@@ -106,16 +109,16 @@ for s, subject in enumerate(subject_list):
                 imus = read_write.read_xsens_imus(xsens_imu_folder)
                 for i, sensor in enumerate(imus):
                     imus[sensor] = imus[sensor]
-                del imus['C7IMU']
-                del imus['T12IMU']
+                # del imus['C7IMU']
+                # del imus['T12IMU']
                 # get the segmentation range
-                segmentation_s = segmentation_labels.segmentation_start[
+                segmentation_s = np.sort(segmentation_labels.segmentation_start[
                     (segmentation_labels['subject_num']==subject) &
-                    (segmentation_labels['trial_number']==file[0:3])].values
-                segmentation_e = segmentation_labels.segmentation_end[
+                    (segmentation_labels['trial_number']==file[0:3])].unique())
+                segmentation_e = np.sort(segmentation_labels.segmentation_end[
                     (segmentation_labels['subject_num'] == subject) & (
-                                segmentation_labels['trial_number'] == file[0:3])].values
-                segmentation = [range(segmentation_s[i], segmentation_e[i]) for i in range(len(segmentation_s))]
+                                segmentation_labels['trial_number'] == file[0:3])].unique())
+                segmentation = [range(int(segmentation_s[i]), int(segmentation_e[i])) for i in range(len(segmentation_s))]
                 # get segmented imu and ik
                 for c, seg in enumerate(segmentation):
                     segment = seg

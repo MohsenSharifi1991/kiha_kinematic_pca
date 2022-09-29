@@ -50,6 +50,7 @@ class SimulateData:
         :Note: self analyze tool should be within the function when we run augmentation and should be delete after each iteration
         . we can also move the self.analyzeTool up when we set the class
         '''
+        self.analyzeTool = osim.AnalyzeTool(self.analyze_setup_file)
         motCoordsData = osim.Storage(ik_file)
         initial_time = motCoordsData.getFirstTime()
         final_time = motCoordsData.getLastTime()
@@ -68,6 +69,7 @@ class SimulateData:
             analysis = analysis_set.get(k)
             analysis.setStartTime(initial_time)
             analysis.setEndTime(final_time)
+            # self.analyzeTool.getAnalysisSet().cloneAndAppend(analysis)
         self.analyzeTool.run()
 
     def run_simulating_imu(self, analyze_result_folder, trial_num):
@@ -78,7 +80,7 @@ class SimulateData:
                            'LUpLegIMU', 'LLoLegIMU', 'LFootIMU']
         s_index = analyze_result_folder.find('/S')
         subject_num = analyze_result_folder[s_index+1:s_index+4]
-        r_mat_file_name = 'F:/dataset/opensim_imu_augmentation/Models/r_mat_freeacc/' + subject_num + '_r_mat_freeacc.p'
+        r_mat_file_name = 'H:/dataset/opensim_imu_augmentation/Models/r_mat_freeacc/' + subject_num + '_r_mat_freeacc.p'
         if os.path.exists(r_mat_file_name):
             with open(r_mat_file_name, 'rb') as f:
                 r_mat_freeacc = pickle.load(f)
@@ -142,7 +144,7 @@ class SimulateData:
         imu_marker_list = ['PelvisIMU', 'RUpLegIMU', 'RLoLegIMU', 'RFootIMU',
             'LUpLegIMU', 'LLoLegIMU', 'LFootIMU']
         subject_num = analyze_result_folder[-12:][0:3]
-        r_mat_file_name = 'F:/dataset/opensim_imu_augmentation/Models/r_mat_freeacc/' + subject_num + '_r_mat_freeacc.p'
+        r_mat_file_name = 'H:/dataset/opensim_imu_augmentation/Models/r_mat_freeacc/' + subject_num + '_r_mat_freeacc.p'
         if os.path.exists(r_mat_file_name):
             with open(r_mat_file_name, 'rb') as f:
                 r_mat_freeacc = pickle.load(f)

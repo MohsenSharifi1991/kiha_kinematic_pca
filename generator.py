@@ -6,12 +6,16 @@ from visualization.streamlit_graph import plot_kinematic
 
 config = get_config()
 # load pca models, scaler, activity density, and store them in dict
-activity_densities = pk.load(open('./cache/activity_densities.pkl', 'rb'))
-generative_model = {'Gait': {}, 'Stair Ascent': {}, 'Stair Descent': {}, 'STS': {}}
+# activity_densities = pk.load(open('./cache/activity_densities.pkl', 'rb'))
+activity_densities = pk.load(open('./cache/v02/activity_densities.pkl', 'rb'))
+# generative_model = {'Gait': {}, 'Stair Ascent': {}, 'Stair Descent': {}, 'STS': {}}
+generative_model = {'Gait': {}, 'Stair Ascent': {}, 'Stair Descent': {}}
 for key, value in generative_model.items():
     # load scalar
-    value['pca'] = pk.load(open('./cache/pca_'+key+'.pkl', 'rb'))
-    value['scalar'] = pk.load(open('./cache/pcs_scaler_' + key + '.pkl', 'rb'))
+    value['pca'] = pk.load(open('./cache/v02/pca_'+key+'.pkl', 'rb'))
+    value['scalar'] = pk.load(open('./cache/v02/pcs_scaler_' + key + '.pkl', 'rb'))
+    # value['pca'] = pk.load(open('./cache/pca_'+key+'.pkl', 'rb'))
+    # value['scalar'] = pk.load(open('./cache/pcs_scaler_' + key + '.pkl', 'rb'))
     value['density_function'] = activity_densities[key]
 
 
@@ -19,6 +23,10 @@ def run_generative_model(selected_activity, selected_knee, number_sample):
     pca = generative_model[selected_activity]['pca']
     scaler = generative_model[selected_activity]['scalar']
     df = generative_model[selected_activity]['density_function']
+    # if update_distance:
+    #     mu_oa = [v for k, v in df.items() if 'oa' in k and 'mu' in k][0]
+    #     mu_oa = [v for k, v in df.items() if 'tka' in k and 'mu' in k][0]
+
     mu = [v for k, v in df.items() if selected_knee in k and 'mu' in k][0]
     cov = [v for k, v in df.items() if selected_knee in k and 'cov' in k][0]
     x_standardized = np.random.multivariate_normal(mu, cov, number_sample)

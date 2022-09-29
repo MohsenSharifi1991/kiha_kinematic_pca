@@ -293,6 +293,18 @@ def multicolor_pc_line(pca_comp_abs, kinematic_mean, plt_title):
     plt.show()
 
 
+def plot_kinematic_3d(kinematic_data, title_name):
+    plt.figure()
+    c = 2
+    for i in range(kinematic_data.shape[2]):
+        plt.subplot(round(kinematic_data.shape[2] / c), c, i + 1)
+        for j in range(kinematic_data.shape[0]):
+            plt.plot(kinematic_data[j, :, i], color='gray', alpha=0.1)
+        plt.plot(np.mean(kinematic_data[:, :, i], axis=0), color='green')
+    plt.title(title_name)
+    plt.show()
+
+
 def plot_kinematics(data, dof_labels, activity, range_len, wandb_plot=True):
     plt.figure(figsize=(10, 8))
     n_kinematic = len(dof_labels)
@@ -312,22 +324,25 @@ def plot_kinematics(data, dof_labels, activity, range_len, wandb_plot=True):
     else:
         plt.show()
 
-def plot_kinematics_mean_std(data, knee_index, dof_labels, activity, range_len, wandb_plot=True):
+def plot_kinematics_mean_std(data, knee_index, y_axis, dof_labels, activity, range_len, wandb_plot=True):
     # plt.figure()
     plt.figure(figsize=(10, 8))
     n_kinematic = len(dof_labels)
     c = 2
-    colors = ['b', 'r']
+    if 'synthetic' in activity and len(knee_index)==2:
+        colors = ['c', 'orange']
+    else:
+        colors = ['b', 'r', 'c', 'orange']
     for i, kinematic_label in enumerate(dof_labels):
-        plt.subplot(round(n_kinematic / c), c, i + 1)
+        plt.subplot(round(n_kinematic / c)+ n_kinematic%c, c, i + 1)
         len_data = range(i * range_len, i * range_len + range_len)
         for k, (key, value) in enumerate(knee_index.items()):
-            # plt.fill_between(np.arange(0, len(len_data)),
-            #                  np.mean(data[value, :], 0)[len_data] - np.std(data[value, :], 0)[len_data],
-            #                  np.mean(data[value, :], 0)[len_data] + np.std(data[value, :], 0)[len_data],
-            #                  label='+-std', color=colors[k], alpha=0.1)
-            for j in range(len(value)):
-                plt.plot(np.arange(0, len(len_data)), data[j, :][len_data], color='gray', alpha=0.1)
+            plt.fill_between(np.arange(0, len(len_data)),
+                             np.mean(data[value, :], 0)[len_data] - np.std(data[value, :], 0)[len_data],
+                             np.mean(data[value, :], 0)[len_data] + np.std(data[value, :], 0)[len_data],
+                             label='+-std', color=colors[k], alpha=0.1)
+            # for j in range(len(value)):
+            #     plt.plot(np.arange(0, len(len_data)), data[j, :][len_data], color='gray', alpha=0.1)
             # plt.plot(np.arange(0, len(len_data)), np.percentile(data[value, :], 5, axis=0)[len_data],
             #          label='5p_' + key, color=colors[k], alpha=0.9, linestyle='dashed')
             # plt.plot(np.arange(0, len(len_data)), np.percentile(data[value, :], 95, axis=0)[len_data],
@@ -339,12 +354,17 @@ def plot_kinematics_mean_std(data, knee_index, dof_labels, activity, range_len, 
             #          np.mean(data[value, :], 0)[len_data] + 2*np.std(data[value, :], 0)[len_data],
             #          label='+2std_' + key, color=colors[k], alpha=0.9, linestyle='dotted')
 
-            plt.plot(np.mean(data[value, :], 0)[len_data], label='mean_' + key, c=colors[k])
+            plt.plot(np.mean(data[value, :], 0)[len_data], label='mean_' + key, c=colors[k], linewidth=3)
         if i == 1:
             plt.legend(bbox_to_anchor=(1.04, 1), borderaxespad=0)
         plt.ylabel(kinematic_label + ' (deg)')
+        plt.ylim(y_axis[i])
     plt.suptitle(activity, fontsize=16)
     plt.subplots_adjust(right=0.8)
+    plt.tight_layout()
+    save = False
+    if save:
+        plt.savefig('./result/v02/kinematics_mean_std_' + activity + '.png')
     if wandb_plot:
         wandb.log({"kinematics_mean_std": [wandb.Image(plt, caption=activity)]})
     else:
@@ -370,7 +390,7 @@ def plot_pcs_variance_ratio(pca_variance, pca_variance_ratio, title, wandb_plot)
         plt.show()
 
 
-def plot_pcs_mode_profile(data, dof_labels, activity, mode_variation, range_len, n_mode, wandb_plot):
+def plot_pcs_mode_profile(data, y_axis, dof_labels, activity, mode_variation, range_len, n_mode, selected_mode,wandb_plot):
     if n_mode == None or n_mode <= 4:
         colors = ['b', 'r', 'g', 'c']
     else:
@@ -379,13 +399,15 @@ def plot_pcs_mode_profile(data, dof_labels, activity, mode_variation, range_len,
     colors = [plt.cm.tab10(i) for i in range(10)] + [plt.cm.Set3(i) for i in range(10)]
         # n = plt.cm.get_cmap("jet").N
         # colors = [plt.cm.jet(i) for i in range(0, n, round(n/n_mode))]
-    mode_variation = {key: value for key, value in mode_variation.items() if 'pc4' in key or 'pc4' in key}
-    colors = colors[3:]
+    # mode_variation = {key: value for key, value in mode_variation.items() if 'pc4' in key or 'pc4' in key}
+    mode_variation_copy = mode_variation.copy()
+    mode_variation = {key: value for key, value in mode_variation_copy.items() if key[-3:] in selected_mode}
+    colors = colors[int(selected_mode[0][2])-1:]
     plt.figure(figsize=(10, 8))
     n_kinematic = len(dof_labels)
     c = 2
     for i, kinematic_label in enumerate(dof_labels):
-        plt.subplot(round(n_kinematic / c), c, i + 1)
+        plt.subplot(round(n_kinematic / c)+ n_kinematic%c, c, i + 1)
         len_data = range(i * range_len, i * range_len + range_len)
         plt.fill_between(np.arange(0, len(len_data)),
                          np.mean(data, 0)[len_data] - np.std(data, 0)[len_data],
@@ -399,17 +421,21 @@ def plot_pcs_mode_profile(data, dof_labels, activity, mode_variation, range_len,
             else:
                 linestyle = 'dashed'
             j +=1
-            plt.plot(value[len_data], label=key, c=colors[math.floor(m/2)], linestyle=linestyle)
+            plt.plot(value[len_data], label=key, c=colors[math.floor(m/2)], linestyle=linestyle, linewidth=3)
         if i == 1:
             plt.legend(bbox_to_anchor=(1.04, 1), borderaxespad=0)
         plt.ylabel(kinematic_label + ' (deg)')
+        plt.ylim(y_axis[i])
     plt.suptitle(activity, fontsize=16)
     plt.subplots_adjust(right=0.8)
+    plt.tight_layout()
+    save = False
+    if save:
+        plt.savefig('./result/v02/pcs_mode_profile_'+activity + '.png')
     if wandb_plot:
         wandb.log({"pcs_mode_profile": [wandb.Image(plt, caption=activity)]})
     else:
         plt.show()
-
 
 
 def plot_pcs_mode_profile_by_group(data, dof_labels, activity, mode_variation_by_group, range_len, n_mode, group_index, colors_groups, wandb_plot):
@@ -435,7 +461,7 @@ def plot_pcs_mode_profile_by_group(data, dof_labels, activity, mode_variation_by
             linestyle = 'dashed'
 
         for i, kinematic_label in enumerate(dof_labels):
-            plt.subplot(round(n_kinematic / c), c, i + 1)
+            plt.subplot(round(n_kinematic / c)+ n_kinematic%c, c, i + 1)
             len_data = range(i * range_len, i * range_len + range_len)
             for g, (key_g, value_g) in enumerate(value.items()):
                 # mean and std groups
@@ -472,41 +498,66 @@ def plot_pcs_mode_profile_by_group(data, dof_labels, activity, mode_variation_by
                 plt.show()
 
 
-def plot_pcs_comp_profile(dof_labels, activity, pca_comp, range_len, abs_pcs=False, wandb_plot=True):
+def plot_pcs_comp_profile(dof_labels, activity, pca_comp, range_len, abs_pcs=False, wandb_plot=True, selected_PCs=None):
     if abs_pcs == True:
         pca_comp = abs(pca_comp)
         pca_title_label = '_abs_'
     else:
         pca_title_label = '_'
-    plt.figure(figsize=[10,8])
+    plt.figure(figsize=[10, 8])
     colors = [plt.cm.tab20(i) for i in range(20)]
     colors = [plt.cm.tab10(i) for i in range(10)] + [plt.cm.Set3(i) for i in range(10)]
     n_kinematic = len(dof_labels)
     c = 2
     for i, kinematic_label in enumerate(dof_labels):
-        plt.subplot(round(n_kinematic / c), c, i + 1)
+        plt.subplot(round(n_kinematic / c) + n_kinematic % c, c, i + 1)
         len_data = range(i * range_len, i * range_len + range_len)
         plt.hlines(0, range_len, 0, linestyles='-.', colors='k')
         for l in range(len(pca_comp)):
-            plt.plot(pca_comp[l, len_data], label='PC{}'.format(l + 1), linestyle='-',
-                     c=colors[l])
+            if selected_PCs is None:
+                plt.plot(pca_comp[l, len_data], label='PC{}'.format(l + 1), linestyle='-', linewidth=3.0,
+                         c=colors[l])
+            else:
+                if l + 1 in selected_PCs:
+                    plt.plot(pca_comp[l, len_data], label='PC{}'.format(l + 1), linestyle='-', linewidth=3.0,
+                             c=colors[l])
+                    plt.plot(pca_comp[l, len_data].argmax(), pca_comp[l, len_data].max(),
+                             c=colors[l], marker='o',
+                             markerfacecolor=colors[l], markersize=10)
+                    plt.text(pca_comp[l, len_data].argmax(), pca_comp[l, len_data].max(),
+                             pca_comp[l, len_data].argmax(), fontsize=10)
+                    plt.plot(pca_comp[l, len_data].argmin(), pca_comp[l, len_data].min(),
+                             c=colors[l], marker='o',
+                             markerfacecolor=colors[l], markersize=10)
+                    plt.text(pca_comp[l, len_data].argmin(), pca_comp[l, len_data].min(),
+                             pca_comp[l, len_data].argmin(),
+                             fontsize=10)
         plt.ylabel(kinematic_label)
-    plt.legend()
+        # plt.ylim([-1, 1])
+        if i == 1:
+            plt.legend(bbox_to_anchor=(1, 1), borderaxespad=0.5)
     plt.suptitle(activity + pca_title_label + 'PC component score', fontsize=16)
+    plt.subplots_adjust(right=0.8)
+    plt.tight_layout()
     if wandb_plot:
         wandb.log({"pcs_comp/loading_profile": [wandb.Image(plt, caption=activity)]})
     else:
         plt.show()
+    save = False
+    if save:
+        plt.savefig('./result/v02/pcs_loading_profile_' + activity + '.png')
 
 
-def plot_pcs_segment_profile(data, dof_labels, activity, pca_comp_abs, range_len, n_pc_segment=None, wandb_plot=True):
+def plot_pcs_segment_profile(data, y_axis, dof_labels, activity, pca_comp_abs, range_len, n_pc_segment=None, wandb_plot=True):
+    save = True
     n_kinematic = len(dof_labels)
     c = 2
-    fig, axes = plt.subplots(round(n_kinematic / c), c)
+    # plt.figure(figsize=[10, 8])
+    fig, axes = plt.subplots(round(n_kinematic / c)+ n_kinematic%c, c, figsize=[10, 8])
     for i, kinematic_label in enumerate(dof_labels):
         len_data = np.arange(i * range_len, i * range_len + range_len)
         kinematic_mean = np.mean(data, 0)[len_data]
-        if n_pc_segment == None or n_pc_segment>3:
+        if n_pc_segment == None or n_pc_segment > 3:
             pca_comp_abs_seg = pca_comp_abs[:, :][:, len_data]
             if n_pc_segment:
                 pca_comp_abs_seg = pca_comp_abs[0:n_pc_segment, :][:, len_data]
@@ -524,7 +575,7 @@ def plot_pcs_segment_profile(data, dof_labels, activity, pca_comp_abs, range_len
         points = np.array([x, y]).T.reshape(-1, 1, 2)
         segments = np.concatenate([points[:-1], points[1:]], axis=1)
         norm = plt.Normalize(0, pca_comp_abs_seg.shape[0])
-        lc = LineCollection(segments, cmap=cmap, linewidths=4, norm=norm)
+        lc = LineCollection(segments, cmap=cmap, linewidths=3, norm=norm)
         axes[i // 2, i % 2].set_xlim(np.min(x), np.max(x))
         axes[i // 2, i % 2].set_ylim(np.min(y), np.max(y))
         lc.set_array(pc_indx)
@@ -533,12 +584,16 @@ def plot_pcs_segment_profile(data, dof_labels, activity, pca_comp_abs, range_len
         cbar.set_ticks(list(np.arange(0 + 1, pca_comp_abs_seg.shape[0] + 1)))
         cbar.set_ticklabels(["PC " + str(i) for i in list(np.arange(0 + 1, pca_comp_abs_seg.shape[0] + 1))])
         # plt.sci(lc)  # This allows interactive changing of the colormap.
-        axes[i // 2, i % 2].set_title(kinematic_label)
+        # axes[i // 2, i % 2].set_title(kinematic_label)
+        axes[i // 2, i % 2].set_ylabel(kinematic_label)
+        axes[i // 2, i % 2].set_ylim(y_axis[i])
     fig.suptitle(activity, fontsize=16)
     if wandb_plot:
         wandb.log({"pcs_segment_profile": [wandb.Image(fig, caption=activity)]})
     else:
         plt.show()
+    if save:
+        plt.savefig('./result/v02/pcs_segment_profile_' + activity + '.png')
 
 
 def plot_range_of_each_pc_mode(dof_labels, activity, mode_variation_df, range_len, wandb_plot):
@@ -563,7 +618,7 @@ def plot_range_of_each_pc_mode(dof_labels, activity, mode_variation_df, range_le
         colors_palette[i] = c
 
     c = 2
-    fig, axes = plt.subplots(round(n_kinematic / c), c, figsize=[10, 8])
+    fig, axes = plt.subplots(round(n_kinematic / c)+ n_kinematic%c, c, figsize=[10, 8])
     for i, kinematic_label in enumerate(dof_labels):
         len_data = range(i * range_len, i * range_len + range_len)
         # mode_variation_df_temp = mode_variation_df.iloc[len_data].agg(['min', 'max'])
@@ -642,15 +697,38 @@ def plot_range_of_each_pc_mode_by_group(dof_labels, activity, mode_variation_by_
 
 def plot_heatmap(data_df, xlabel='', ylabel='', title='', subtitle='', wandb_plot=True):
     fig, axes = plt.subplots(figsize=[10, 8])
-    f = sns.heatmap(data=data_df, cmap="coolwarm", annot=True, fmt='.3g', ax=axes)
+    f = sns.heatmap(data=data_df, cmap="Blues", annot=True, fmt='.3g', ax=axes, vmin=0, vmax=1)
     f.set_xlabel(xlabel)
     f.set_ylabel(ylabel)
     fig.tight_layout()
+    save = True
     if wandb_plot:
         wandb.log({"heatmap:" + title: wandb.Image(f)})
     else:
-        plt.title('heatmap: ' + title + '|' + subtitle)
+        # plt.title('heatmap: ' + title + '|' + subtitle)
         plt.show()
+    if save:
+        plt.savefig('./result/v02/' + title +'.png')
+
+
+def plot_heatmap_demographic(data_df, xlabel='', ylabel='', title='', subtitle='', wandb_plot=True):
+    fig, axes = plt.subplots(figsize=[10, 5])
+    f = sns.heatmap(data=data_df, cmap="Blues", annot=True, fmt='.3g', ax=axes, center=0, vmin=-1, vmax=1,
+                    cbar_kws={"shrink": 0.5}, square=True)
+    f = sns.heatmap(data=data_df, cmap="Blues", annot=True, fmt='.3g', ax=axes, vmin=0, vmax=1, square=True)
+
+    # cmap = "bwr"
+    f.set_xlabel(xlabel)
+    f.set_ylabel(ylabel)
+    fig.tight_layout()
+    save = True
+    if wandb_plot:
+        wandb.log({"heatmap:" + title: wandb.Image(f)})
+    else:
+    # plt.title('heatmap: ' + title + '|' + subtitle)
+        plt.show()
+    if save:
+        plt.savefig('./result/v02/' + title+'.png')
 
 
 def plot_warping_kiha(s1, s2, dof_labels, range_len, title, all_dof_together, filename=None):
@@ -826,7 +904,12 @@ def plot_graph_network(data_df1, data_df2=None, metric='correlation', corr_metho
     # color = 'b'
     size = [100 * (degree[n] + 1.0) for n in nodes]
     pos = networkx.circular_layout(G)
-    networkx.draw(G, pos=pos, nodelist=nodes, node_color=color, node_size=size, node_shape="s", alpha=0.7, with_labels=True, font_weight="bold", edge_color=weights, width=1.0, edge_cmap=plt.cm.PuOr)
+    # networkx.draw(G, pos=pos, nodelist=nodes, node_color=color, node_size=size, node_shape="s", alpha=0.7, with_labels=True, font_weight="bold", edge_color=weights, width=1.0, edge_cmap=plt.cm.PuOr)
+    networkx.draw(G, pos=pos, nodelist=nodes, node_color='blue', node_size=400, alpha=0.7,
+                  with_labels=True, font_weight="bold", edge_color=weights, width=1.0, edge_cmap=plt.cm.PuOr)
+    save = False
+    if save:
+        plt.savefig('./result/v01/Graph Network Activities.png')
     if wandb_plot:
         wandb.log({"Graph Network" + metric: [wandb.Image(plt, caption=title)]})
     else:

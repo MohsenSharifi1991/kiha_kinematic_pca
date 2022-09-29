@@ -4,9 +4,10 @@ import seaborn as sns
 import pickle as pk
 import pandas as pd
 import numpy as np
-from pyDOE import ff2n
 from scipy.stats import pearsonr
 from sklearn import linear_model, tree, svm, neighbors, gaussian_process
+from sklearn.feature_selection import SequentialFeatureSelector, RFE
+from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.model_selection import KFold, cross_validate, cross_val_predict
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.pipeline import make_pipeline
@@ -16,7 +17,6 @@ from sklearn.gaussian_process.kernels import DotProduct, WhiteKernel, RBF, Expon
 from sklearn.ensemble import GradientBoostingRegressor, BaggingRegressor, AdaBoostRegressor, RandomForestRegressor, \
     StackingRegressor, ExtraTreesRegressor, RandomTreesEmbedding, VotingRegressor
 import matplotlib.pyplot as plt
-import pyDOE
 
 def run_regressor():
 
@@ -26,7 +26,8 @@ def run_regressor():
     activities = ["Gait", 'Stair Ascent', 'Stair Descent', 'STS']
     ia, oa, mn, rmses, mapes, r2s, rs = [], [], [], [], [], [], []
     current = 0
-    model_save = True
+    poly_feature = False
+    model_save = False
     for input, output in itertools.combinations(activities, 2):
         for i in range(2):
             if i==0:
@@ -39,13 +40,19 @@ def run_regressor():
             y = pcs[[c for c in pcs.columns if output_activity in c]].values
             # standrize the patient_pcs data
             scaler = StandardScaler()
-            # scaler = PolynomialFeatures(degree=2)
+            scaler_poly = PolynomialFeatures(degree=2)
             # list of model
             models = {'LinearRegression': linear_model.LinearRegression(),
                             'RidgeCV': linear_model.RidgeCV(alphas=np.logspace(-6, 6, 13)),
                             'Lasso': linear_model.Lasso(alpha=0.1),
-                            'ElasticNet': linear_model.ElasticNet(),
+                            'ElasticNetCV': linear_model.ElasticNetCV(cv=5),
                             'BayesianRidge': linear_model.BayesianRidge(),
+                      # 'LinearRegressionRFE': linear_model.LinearRegression(),
+                      # 'RidgeCVRFE': linear_model.RidgeCV(alphas=np.logspace(-6, 6, 13)),
+                      # 'LassoRFE': linear_model.Lasso(alpha=0.1),
+                      # 'ElasticNetCVRFE': linear_model.ElasticNetCV(cv=5),
+                      # 'BayesianRidgeRFE': linear_model.BayesianRidge(),
+                            # 'GaussianProcessRegressor':GaussianProcessRegressor(),
                             # 'LogisticRegression':linear_model.LogisticRegression(),
                             # 'TweedieRegressor': linear_model.TweedieRegressor(power=1, alpha=0.5, link='log'),
                             # 'SGDRegressor': linear_model.SGDRegressor(max_iter=1000, tol=1e-3),
@@ -75,9 +82,15 @@ def run_regressor():
                 model = value
                 # model_name = 'LinearRegression'
                 # model = models[model_name]
+                if model_name[-3:]=='RFE':
+                    model = RFE(model)
                 model = MultiOutputRegressor(model)
+                # model = RFE(model)
                 # model = ensemble_models['BaggingRegressor']
-                pipeline = make_pipeline(scaler, model)
+                if poly_feature:
+                    pipeline = make_pipeline(scaler, scaler_poly, model)
+                else:
+                    pipeline = make_pipeline(scaler, model)
                 cv = KFold(n_splits=len(y))
                 accuracy_scores = cross_validate(pipeline, x, y,
                                                  scoring=('neg_mean_squared_error', 'neg_root_mean_squared_error', 'neg_mean_absolute_percentage_error'), cv=cv,
@@ -119,12 +132,12 @@ def run_regressor():
             'r2':r2s,
             'r':rs}
     results_df = pd.DataFrame.from_dict(results)
-
+    results_df.to_csv('model_accuracy.csv')
     for metric in ['RMSE', 'MAPE', 'r2', 'r']:
         fig, axes = plt.subplots(2, 2, figsize=[10,8])
         for i, activity in enumerate(activities):
             sns.barplot(ax=axes[i // 2, i % 2], x='output_activity', y=metric, hue='model_name',
-                        data=results_df[results_df['input_activity'] == activity])
+                        data=results_df[results_df['input_activity'] == activity], palette="tab10")
             axes[i // 2, i % 2].set_title('Input Activity: ' + activity, fontdict={'fontsize': 20})
             axes[i // 2, i % 2].set_ylabel(ylabel=metric, fontdict={'fontsize': 20})
             axes[i // 2, i % 2].set_xlabel(xlabel='Output Activities', fontdict={'fontsize': 20})

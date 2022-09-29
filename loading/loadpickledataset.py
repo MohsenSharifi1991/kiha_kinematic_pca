@@ -3,6 +3,7 @@ import pickle
 import numpy as np
 import random
 import pandas as pd
+from numpy import rad2deg
 
 
 class LoadPickleDataSet:
@@ -52,6 +53,18 @@ class LoadPickleDataSet:
         #                                   & (y_labels['types'].isin(self.selected_data_types))].index.values.tolist()
         print('total dataset length: ', len(selected_y_indexes))
         # wandb.log({'training_data_length': len(selected_y_indexes)})
+        if "L4_L5_IVD_bendjnt_r1" in self.selected_opensim_labels:
+            y_values_temp = []
+            # calculated ll flexion
+            for y_val in y_values:
+                y_val['ll']  = self.calculated_lumbar_lordusis_flexion(y_val)
+                y_values_temp.append(y_val)
+            y_values = y_values_temp
+            # update opensim labels by adding LL and removing LL sub angles
+            self.selected_opensim_labels.extend(['ll'])
+            self.selected_opensim_labels = [label for label in self.selected_opensim_labels if label not in ["flex_extension","L4_L5_IVD_bendjnt_r1", "L3_L4_IVD_bendjnt_r1", "L2_L3_IVD_bendjnt_r1", "L1_L2_IVD_bendjnt_r1"]]
+
+
         if self.selected_opensim_labels == ['all']:
             self.selected_y_values = [y_val.iloc[:, 1:].values for i, y_val in enumerate(y_values) if
                                       i in selected_y_indexes]
@@ -59,6 +72,17 @@ class LoadPickleDataSet:
             self.selected_y_values = [y_val[self.selected_opensim_labels].values for i, y_val in enumerate(y_values) if i in selected_y_indexes]
         self.selected_y_labels = self.selected_y_labels.reset_index(drop=True)
         del y
+
+    def calculated_lumbar_lordusis_flexion(self, y_val):
+        LL1_L1 = rad2deg(0.36)
+        l1_l2 = y_val['L1_L2_IVD_bendjnt_r1']
+        l2_l3 = y_val['L2_L3_IVD_bendjnt_r1']
+        l3_l4 = y_val['L3_L4_IVD_bendjnt_r1']
+        l4_l5 = y_val['L4_L5_IVD_bendjnt_r1']
+        l5_s = y_val['flex_extension']
+        s_ss = rad2deg(0.4)
+        ll = LL1_L1 + l1_l2 + l2_l3 + l3_l4 + l4_l5 + l5_s + s_ss
+        return ll
 
     def concat_x(self, selected_x_values):
         concat_x_values = []
@@ -116,6 +140,14 @@ class LoadPickleDataSet:
 
     def run_get_dataset(self):
         self.load_dataset()
+        labels = self.dataset['metadata'].reset_index(drop=True)
+        left = labels[(labels['subject_num'] == 'S10') & (labels['activity'] == 'Gait') & (labels['side_seg'] == 'L')]
+        right = labels[(labels['subject_num'] == 'S10') & (labels['activity'] == 'Gait') & (labels['side_seg'] == 'R')]
+        labels.iloc[left.index.values]['side_seg'] = 'R'
+        labels.iloc[right.index.values]['side_seg'] = 'L'
+
+
+
         self.get_y_data()
         self.get_x_data()
         self.rename_stair_activity()

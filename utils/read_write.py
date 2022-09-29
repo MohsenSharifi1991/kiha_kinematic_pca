@@ -6,7 +6,7 @@ from config import get_config
 from scipy.io import loadmat, savemat
 from utils import filter
 
-config = get_config()
+config = get_config(config_name='config_6dofknee')
 
 
 def read_osim_imu(osim_imu_file):

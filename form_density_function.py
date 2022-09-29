@@ -2,14 +2,22 @@ import pandas as pd
 import numpy as np
 import pickle as pk
 from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 scaler_save = True
 activity_densities_save = True
-pcs = pd.read_csv('./result/all_pca_patient_variables_singlegait.csv')
+# pcs = pd.read_csv('./result/v02/all_pca_patient_variables_singlegait.csv')
+pcs = pd.read_excel('./result/v02/all_pca_patient_variables_singlegait.xlsx')
+# pcs = pd.read_excel('./result/v02/all_pca_patient_variables_singlegait_v2.xlsx')
+
 pcs_std = pcs.copy()
 
 activities = ['Gait', 'Stair Ascent', 'Stair Descent', 'STS']
-activity_densities = {'Gait':{}, 'Stair Ascent':{}, 'Stair Descent':{}, 'STS':{}}
+activity_densities = {'Gait': {}, 'Stair Ascent': {}, 'Stair Descent': {}, 'STS': {}}
+# activities = ['Gait', 'Stair Ascent', 'Stair Descent']
+# activity_densities = {'Gait': {}, 'Stair Ascent': {}, 'Stair Descent': {}}
+
 for a, activity in enumerate(activities):
     # calculated density function of PCs per activity
     pcs_columns = [c for c in pcs.columns if activity in c]
@@ -19,15 +27,17 @@ for a, activity in enumerate(activities):
     oa_cov = np.cov(pcs_std[pcs_columns][pcs_std['knee'] == 'OA'].T, bias=True)
     tka_mu = np.mean(pcs_std[pcs_columns][pcs_std['knee'] == 'BiTKA']).values
     tka_cov = np.cov(pcs_std[pcs_columns][pcs_std['knee'] == 'BiTKA'].T, bias=True)
+    sns.scatterplot(x=pcs_columns[0], y=pcs_columns[1], hue='knee', data=pcs_std)
+
     if scaler_save:
-        pk.dump(scaler, open('./cache/pcs_scaler_' + activity + '.pkl', 'wb'))
+        pk.dump(scaler, open('./cache/v02/pcs_scaler_' + activity + '.pkl', 'wb'))
     activity_densities[activity]['oa_mu'] = oa_mu
     activity_densities[activity]['oa_cov'] = oa_cov
-    activity_densities[activity]['tka_mu'] = oa_mu
+    activity_densities[activity]['tka_mu'] = tka_mu
     activity_densities[activity]['tka_cov'] = tka_cov
 
 if activity_densities_save:
-    pk.dump(activity_densities, open('./cache/activity_densities.pkl', 'wb'))
+    pk.dump(activity_densities, open('./cache/v02/activity_densities.pkl', 'wb'))
 
 # later reload the pickle file
 pca_reload = pk.load(open("pca.pkl",'rb'))

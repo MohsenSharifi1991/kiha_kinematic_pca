@@ -1,10 +1,13 @@
 wandb
-caches
+cache
 .idea
 *.log
 __pychae__
 __pycache__
 *.mp4
+result
+*.xlsx
+*.csv
 
 
 

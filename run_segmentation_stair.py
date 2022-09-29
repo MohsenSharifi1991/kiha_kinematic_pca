@@ -41,7 +41,9 @@ subject_list = ['S09', 'S10', 'S11', 'S12', 'S13', 'S15', 'S16',
                 'S17', 'S18', 'S19', 'S20', 'S21', 'S22', 'S23',
                 'S24', 'S25', 'S26', 'S27', 'S28', 'S29', 'S30',
                 'S31', 'S32', 'S33', 'S34', 'S35', 'S36', 'S37', 'S38', 'S39']
-segmentation_labels = read_write.read_matfile('E:/dataset/kiha/SegmentationIndex/activity_stair_index.mat')
+segmentation_labels = read_write.read_matfile('H:/dataset/kiha/SegmentationIndex/activity_stair_index.mat')
+with open('H:/dataset/kiha/SegmentationIndex/activity_stair_index_with_gc.pkl', 'rb') as f:
+    segmentation_labels = pickle.load(f)
 
 ii = 0
 save = False
@@ -58,27 +60,36 @@ for s, subject in enumerate(subject_list):
     analyze_result_subject_baseline_gc = analyze_result_main_folder + subject + '/'+activity + '/baseline' + extension_folder + '_gc'
     xsensimu_result_subject_baseline = xsensimu_main_folder + subject + '/' + activity + '/baseline' + extension_folder
     xsensimu_result_subject_baseline_gc = xsensimu_main_folder + subject + '/' + activity + '/baseline' + extension_folder + '_gc'
+    osimimu_result_subject_baseline = imuosim_main_folder + subject + '/' + activity + '/baseline' + extension_folder
+    osimimu_result_subject_baseline_gc = imuosim_main_folder + subject + '/' + activity + '/baseline' + extension_folder + '_gc'
     marker_result_subject = marker_main_molder + subject
 
     if not os.path.exists(ik_result_subject_baseline):
         os.makedirs(ik_result_subject_baseline)
 
-    if os.path.exists(ik_result_subject_baseline_gc):
-        shutil.rmtree(ik_result_subject_baseline_gc)
+    # if os.path.exists(ik_result_subject_baseline_gc):
+    #     shutil.rmtree(ik_result_subject_baseline_gc)
     if not os.path.exists(ik_result_subject_baseline_gc):
         os.makedirs(ik_result_subject_baseline_gc)
 
     if not os.path.exists(analyze_result_subject_baseline):
         os.makedirs(analyze_result_subject_baseline)
-    # if not os.path.exists(analyze_result_subject_baseline_gc):
-    #     os.makedirs(analyze_result_subject_baseline_gc)
+    if not os.path.exists(analyze_result_subject_baseline_gc):
+        os.makedirs(analyze_result_subject_baseline_gc)
 
     if not os.path.exists(xsensimu_result_subject_baseline):
         os.makedirs(xsensimu_result_subject_baseline)
-    if os.path.exists(xsensimu_result_subject_baseline_gc):
-        shutil.rmtree(xsensimu_result_subject_baseline_gc)
+    # if os.path.exists(xsensimu_result_subject_baseline_gc):
+    #     shutil.rmtree(xsensimu_result_subject_baseline_gc)
     if not os.path.exists(xsensimu_result_subject_baseline_gc):
         os.makedirs(xsensimu_result_subject_baseline_gc)
+
+    if not os.path.exists(osimimu_result_subject_baseline):
+        os.makedirs(osimimu_result_subject_baseline)
+    # if os.path.exists(osimimu_result_subject_baseline_gc):
+    #     shutil.rmtree(osimimu_result_subject_baseline_gc)
+    if not os.path.exists(osimimu_result_subject_baseline_gc):
+        os.makedirs(osimimu_result_subject_baseline_gc)
     sides = []
     x_signals = []
     y_signals = []
@@ -95,8 +106,9 @@ for s, subject in enumerate(subject_list):
                 # read imu file
                 xsens_imu_folder = xsensimu_result_subject_baseline + '/' + file[:-7]
                 imus = read_write.read_xsens_imus(xsens_imu_folder)
-                del imus['C7IMU']
-                del imus['T12IMU']
+                if dof6_knee:
+                    del imus['C7IMU']
+                    del imus['T12IMU']
                 for i, sensor in enumerate(imus):
                     imus[sensor] = imus[sensor][0:end_trial]
                 # get the segmentation range
@@ -143,7 +155,10 @@ for s, subject in enumerate(subject_list):
                 # update kinematic based on only stair kinematic:
                 kinematics = kinematics.iloc[stair_segment-1].reset_index()
                 max_length = len(kinematics)
-
+                # import matplotlib.pyplot as plt
+                # plt.figure()
+                # plt.plot(kinematics[['hip_flexion_l', 'knee_FE_l']])
+                # plt.show()
                 for c, seg in enumerate(segments):
                     segment = seg-1 # matlab is from 1 and python is from 0--> we subtract 1 from all values
                     side = sides[c]
@@ -154,10 +169,11 @@ for s, subject in enumerate(subject_list):
                     for _, sensor in enumerate(imus):
                         imu[sensor] = imus[sensor].iloc[segment]
 
-                    # import matplotlib.pyplot as plt
+
                     # plt.figure()
                     # plt.plot(kinematic[['hip_flexion_l', 'knee_FE_l']])
                     # plt.show()
+
                     # plt.figure()
                     # plt.subplot(1, 2, 1)
                     # plt.plot(imu['LFootIMU'].iloc[:, 0:3])
@@ -170,27 +186,42 @@ for s, subject in enumerate(subject_list):
                     if not os.path.exists(ik_result_subject_baseline_gc):
                         os.makedirs(ik_result_subject_baseline_gc)
                     # write new gc_segmented kinematic .mot file
-                    timeseriesosimtable = read_write.pd_to_osimtimeseriestable(kinematic)
-                    osim.STOFileAdapter().write(timeseriesosimtable, ik_result_subject_baseline_gc + '/' + file[:-4] + '_C' + str(
-                                                    c) + '.mot')
+                    # timeseriesosimtable = read_write.pd_to_osimtimeseriestable(kinematic)
+                    # osim.STOFileAdapter().write(timeseriesosimtable, ik_result_subject_baseline_gc + '/' + file[:-4] + '_C' + str(
+                    #                                 c) + '.mot')
 
                     # create xsens imu folder and write
-                    xsensimu_result_subject_baseline_gc_trial = xsensimu_result_subject_baseline_gc + '/' + file[:-7]+ '_C' + str(c)
-                    if not os.path.exists(xsensimu_result_subject_baseline_gc_trial):
-                        os.makedirs(xsensimu_result_subject_baseline_gc_trial)
-                    simulatedata.export_simulated_imu(imu, xsensimu_result_subject_baseline_gc_trial)
+                    # xsensimu_result_subject_baseline_gc_trial = xsensimu_result_subject_baseline_gc + '/' + file[:-7]+ '_C' + str(c)
+                    # if not os.path.exists(xsensimu_result_subject_baseline_gc_trial):
+                    #     os.makedirs(xsensimu_result_subject_baseline_gc_trial)
+                    # simulatedata.export_simulated_imu(imu, xsensimu_result_subject_baseline_gc_trial)
 
-                    # fill updated segmentation label
-                    segmentation_labels_dic = segmentation_labels[(segmentation_labels['subject_num'] == subject) & (segmentation_labels['trial_num'] == file[0:5])].copy()
-                    segmentation_labels_dic['ic_r_gc'] = [ic_r]
-                    segmentation_labels_dic['ic_l_gc'] = [ic_l]
-                    segmentation_labels_dic['trial_num_gc'] = file[:-4] + '_C' + str(c)
-                    segmentation_labels_dic['segment_gc'] = [segment]
-                    segmentation_labels_dic['side_gc'] = side
-                    if ii ==0:
-                        segmentation_labels_updated = segmentation_labels_dic
-                    else:
-                        segmentation_labels_updated = segmentation_labels_updated.append(segmentation_labels_dic, ignore_index=True)
-                    ii = ii+1
-if save:
-    segmentation_labels_updated.to_pickle('E:/dataset/kiha/SegmentationIndex/activity_stair_index_with_gc.pkl')
+                    # create analyze folder
+                    ik_file = ik_result_subject_baseline_gc + '/' + file[:-4] + '_C' + str(c) + '.mot'
+                    if not os.path.exists(analyze_result_subject_baseline_gc):
+                        os.makedirs(analyze_result_subject_baseline_gc)
+                    # run analyze
+                    simulatedata.run_analyze(ik_file, analyze_result_subject_baseline_gc)
+
+                    # run simulated imu
+                    ximuosim_result_subject_baseline_gc_trial = osimimu_result_subject_baseline_gc+ '/' + file[:-4] + '_C' + str(c)
+                    if not os.path.exists(ximuosim_result_subject_baseline_gc_trial):
+                        os.makedirs(ximuosim_result_subject_baseline_gc_trial)
+                    osimimu = simulatedata.run_simulating_imu(analyze_result_subject_baseline_gc, file[:-4] + '_C' + str(c))
+                    simulatedata.export_simulated_imu(osimimu, ximuosim_result_subject_baseline_gc_trial)
+
+                    # # fill updated segmentation label
+                    # segmentation_labels_dic = segmentation_labels[(segmentation_labels['subject_num'] == subject) & (segmentation_labels['trial_num'] == file[0:5])].copy()
+                    # segmentation_labels_dic['ic_r_gc'] = [ic_r]
+                    # segmentation_labels_dic['ic_l_gc'] = [ic_l]
+                    # segmentation_labels_dic['trial_num_gc'] = file[:-4] + '_C' + str(c)
+                    # segmentation_labels_dic['segment_gc'] = [segment]
+                    # segmentation_labels_dic['side_gc'] = side
+                    # if ii ==0:
+                    #     segmentation_labels_updated = segmentation_labels_dic
+                    # else:
+                    #     segmentation_labels_updated = segmentation_labels_updated.append(segmentation_labels_dic, ignore_index=True)
+                    # ii = ii+1
+
+# if save:
+#     segmentation_labels_updated.to_pickle('E:/dataset/kiha/SegmentationIndex/activity_stair_index_with_gc.pkl')

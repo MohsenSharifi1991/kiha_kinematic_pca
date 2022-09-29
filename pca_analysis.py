@@ -14,6 +14,7 @@ This class for 2d and 3d signals and corresponding patient demographic data
 from sklearn.decomposition import PCA
 import numpy as np
 import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
 
 from visualization.matplotly_plot import plot_pcs_variance_ratio, plot_pcs_mode_profile, plot_range_of_each_pc_mode, \
     plot_pcs_comp_profile, plot_pcs_segment_profile, plot_pcs_mode_profile_by_group, plot_range_of_each_pc_mode_by_group
@@ -63,6 +64,7 @@ class PCAnalysis:
         self.pca_comp = pca.components_                          # [n_component, n_features]  if don't chose any pca component or variance, then we will get n_component=n_sampel, eigenvectors
         self.pca_comp_abs = abs(self.pca_comp)
         self.pca_loading_vector = pca.components_.T * np.sqrt(pca.explained_variance_)
+        # self.pca_loading_vector = MinMaxScaler().fit_transform(self.pca_loading_vector)
         pca_mean = pca.mean_                                     # [n_features,1] mean over features
         self.pca_variance = pca.explained_variance_              # [n_component,1] variance of each component: The eigenvalues represent the variance in the direction of the eigenvector.
         self.pca_variance_ratio = pca.explained_variance_ratio_  # [n_component,1] Percentage of variance explained by each of the selected components.
@@ -107,10 +109,10 @@ class PCAnalysis:
 
         return self.mode_variation_by_group
 
-    def display_pcs_mode_profile(self, n_mode, std_factor, title, wandb_plot):
+    def display_pcs_mode_profile(self, n_mode, std_factor, title, selected_mode, wandb_plot):
         self.form_mode_variations(n_mode, std_factor)
-        plot_pcs_mode_profile(self.x_2d, self.config['selected_opensim_labels'], title + ':' + str(std_factor) + 'std',
-                              self.mode_variation, self.range_len, n_mode=n_mode, wandb_plot=wandb_plot)
+        plot_pcs_mode_profile(self.x_2d, self.config['y_axis_lims'],self.config['selected_opensim_labels'], title + ':' + str(std_factor) + 'std',
+                              self.mode_variation, self.range_len, n_mode=n_mode, selected_mode=selected_mode, wandb_plot=wandb_plot)
 
     def display_pcs_mode_profile_by_group(self, n_mode, std_factor, title, group_index, colors_groups, wandb_plot):
         self.form_mode_variations_by_group(n_mode, std_factor, group_index)
@@ -125,17 +127,17 @@ class PCAnalysis:
         plot_range_of_each_pc_mode_by_group(self.config['selected_opensim_labels'], title,
                                              self.mode_variation_by_group, self.range_len, group_name, group_index, pallete, wandb_plot=wandb_plot)
 
-    def display_pcs_comp_profile(self, title, abs_pcs_status=True, wandb_plot=True):
+    def display_pcs_comp_profile(self, title, abs_pcs_status=True, wandb_plot=True, selected_PCs=None):
         plot_pcs_comp_profile(self.config['selected_opensim_labels'], title,
-                              self.pca_comp, self.range_len, abs_pcs=abs_pcs_status, wandb_plot=wandb_plot)
+                              self.pca_comp, self.range_len, abs_pcs=abs_pcs_status, wandb_plot=wandb_plot, selected_PCs=selected_PCs)
 
-    def display_pcs_loading_profile(self, title, abs_pcs_status=True, wandb_plot=True):
+    def display_pcs_loading_profile(self, title, abs_pcs_status=True, wandb_plot=True, selected_PCs=['PC1', 'CP2']):
         plot_pcs_comp_profile(self.config['selected_opensim_labels'], title,
-                              self.pca_loading_vector.T, self.range_len, abs_pcs=abs_pcs_status, wandb_plot=wandb_plot)
+                              self.pca_loading_vector.T, self.range_len, abs_pcs=abs_pcs_status, wandb_plot=wandb_plot, selected_PCs=selected_PCs)
 
     def display_pcs_segment_profile(self, title, wandb_plot):
         # plot pcs segment
-        plot_pcs_segment_profile(self.x_2d, self.config['selected_opensim_labels'], title,
+        plot_pcs_segment_profile(self.x_2d, self.config['y_axis_lims'], self.config['selected_opensim_labels'], title,
                                  abs(self.pca_loading_vector.T), self.range_len, n_pc_segment=None, wandb_plot=wandb_plot)
 
 

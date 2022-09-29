@@ -32,7 +32,7 @@ model_main_folder = dataset_folder + 'Models/spinopelvic_kinematic/'
 model_file_suffix = '_scaled_pelvis_marker_adjusted_final_imu.osim'
 analyze_setup_file_suffix = '_Setup_AnalyzeTool.xml'
 
-dof6_knee = False
+dof6_knee = True
 if dof6_knee == True:
     model_main_folder = dataset_folder + 'Models/6dofknee/'
     model_file_suffix = '_scaled_adjusted_6dofknee_imu.osim'
@@ -43,14 +43,14 @@ else:
     model_file_suffix = '_scaled_pelvis_marker_adjusted_final_imu.osim'
     extension_folder = '_flexlumb'
 
-subject_list = ['S09', 'S10', 'S11', 'S12', 'S13', 'S15', 'S16',
+subject_list = ['S09','S10', 'S11', 'S12', 'S13', 'S15', 'S16',
                 'S17', 'S18', 'S19', 'S20', 'S21', 'S22', 'S23',
                 'S24', 'S25', 'S26', 'S27', 'S28', 'S29', 'S30',
                 'S31', 'S32', 'S33', 'S34', 'S35', 'S36', 'S37', 'S38', 'S39']
-subject_list = ['S34', 'S35', 'S36', 'S37', 'S38', 'S39']
+subject_list = ['S36', 'S37', 'S38', 'S39']
 
-segmentation_labels = read_write.read_matfile('E:/dataset/kiha/SegmentationIndex/nn_label_segmentation_gc_ik_all.mat')
-with open('E:/dataset/kiha/SegmentationIndex/nn_label_segmentation_gc_ik_all_updateS10S21side.pkl', 'rb') as f:
+segmentation_labels = read_write.read_matfile('H:/dataset/kiha/SegmentationIndex/nn_label_segmentation_gc_ik_all.mat')
+with open('H:/dataset/kiha/SegmentationIndex/nn_label_segmentation_gc_ik_all_with_gc_updateS10S21side.pkl', 'rb') as f:
     segmentation_labels = pickle.load(f)
 
 ii = 0
@@ -70,27 +70,36 @@ for s, subject in enumerate(subject_list):
     analyze_result_subject_baseline_gc = analyze_result_main_folder + subject + '/'+activity + '/baseline' + extension_folder + '_gc'
     xsensimu_result_subject_baseline = xsensimu_main_folder + subject + '/' + activity + '/baseline' + extension_folder
     xsensimu_result_subject_baseline_gc = xsensimu_main_folder + subject + '/' + activity + '/baseline' + extension_folder + '_gc'
+    osimimu_result_subject_baseline = imuosim_main_folder + subject + '/' + activity + '/baseline' + extension_folder
+    osimimu_result_subject_baseline_gc = imuosim_main_folder + subject + '/' + activity + '/baseline' + extension_folder + '_gc'
     marker_result_subject = marker_main_molder + subject
 
     if not os.path.exists(ik_result_subject_baseline):
         os.makedirs(ik_result_subject_baseline)
 
-    if os.path.exists(ik_result_subject_baseline_gc):
-        shutil.rmtree(ik_result_subject_baseline_gc)
+    # if os.path.exists(ik_result_subject_baseline_gc):
+    #     shutil.rmtree(ik_result_subject_baseline_gc)
     if not os.path.exists(ik_result_subject_baseline_gc):
         os.makedirs(ik_result_subject_baseline_gc)
 
-    if not os.path.exists(analyze_result_subject_baseline):
-        os.makedirs(analyze_result_subject_baseline)
+    # if not os.path.exists(analyze_result_subject_baseline):
+    #     os.makedirs(analyze_result_subject_baseline)
     if not os.path.exists(analyze_result_subject_baseline_gc):
         os.makedirs(analyze_result_subject_baseline_gc)
 
     if not os.path.exists(xsensimu_result_subject_baseline):
         os.makedirs(xsensimu_result_subject_baseline)
-    if os.path.exists(xsensimu_result_subject_baseline_gc):
-        shutil.rmtree(xsensimu_result_subject_baseline_gc)
+    # if os.path.exists(xsensimu_result_subject_baseline_gc):
+    #     shutil.rmtree(xsensimu_result_subject_baseline_gc)
     if not os.path.exists(xsensimu_result_subject_baseline_gc):
         os.makedirs(xsensimu_result_subject_baseline_gc)
+
+    if not os.path.exists(osimimu_result_subject_baseline):
+        os.makedirs(osimimu_result_subject_baseline)
+    # if os.path.exists(osimimu_result_subject_baseline_gc):
+    #     shutil.rmtree(osimimu_result_subject_baseline_gc)
+    if not os.path.exists(osimimu_result_subject_baseline_gc):
+        os.makedirs(osimimu_result_subject_baseline_gc)
     sides = []
     x_signals = []
     y_signals = []
@@ -159,29 +168,43 @@ for s, subject in enumerate(subject_list):
                         imu[sensor] = imus[sensor].iloc[segment]
 
                     # create gc_segmented kinematic folder
-                    if not os.path.exists(ik_result_subject_baseline_gc):
-                        os.makedirs(ik_result_subject_baseline_gc)
-                    # write new gc_segmented kinematic .mot file
-                    timeseriesosimtable = read_write.pd_to_osimtimeseriestable(kinematic)
-                    osim.STOFileAdapter().write(timeseriesosimtable, ik_result_subject_baseline_gc + '/' + file[:-4] + '_C' + str(
-                                                    c) + '.mot')
+                    # if not os.path.exists(ik_result_subject_baseline_gc):
+                    #     os.makedirs(ik_result_subject_baseline_gc)
+                    # # write new gc_segmented kinematic .mot file
+                    # timeseriesosimtable = read_write.pd_to_osimtimeseriestable(kinematic)
+                    # osim.STOFileAdapter().write(timeseriesosimtable, ik_result_subject_baseline_gc + '/' + file[:-4] + '_C' + str(c) + '.mot')
                     #
                     # create xsens imu folder and write
-                    xsensimu_result_subject_baseline_gc_trial = xsensimu_result_subject_baseline_gc + '/' + file[:-7]+ '_C' + str(c)
-                    if not os.path.exists(xsensimu_result_subject_baseline_gc_trial):
-                        os.makedirs(xsensimu_result_subject_baseline_gc_trial)
-                    simulatedata.export_simulated_imu(imu, xsensimu_result_subject_baseline_gc_trial)
+                    # xsensimu_result_subject_baseline_gc_trial = xsensimu_result_subject_baseline_gc + '/' + file[:-7]+ '_C' + str(c)
+                    # if not os.path.exists(xsensimu_result_subject_baseline_gc_trial):
+                    #     os.makedirs(xsensimu_result_subject_baseline_gc_trial)
+                    # simulatedata.export_simulated_imu(imu, xsensimu_result_subject_baseline_gc_trial)
 
-                    # fill updated segmentation label
-                    segmentation_labels_dic = segmentation_labels[(segmentation_labels['Subject_Num']==subject) & (segmentation_labels['Trial_Num']==file[0:3])].copy()
-                    segmentation_labels_dic['trial_num_gc'] = file[:-4] + '_C' + str(c)
-                    segmentation_labels_dic['segment_gc'] = [segment]
-                    segmentation_labels_dic['side_gc'] = side
-                    if ii ==0:
-                        segmentation_labels_updated = segmentation_labels_dic.copy()
-                    else:
-                        segmentation_labels_updated = segmentation_labels_updated.append(segmentation_labels_dic, ignore_index=True)
-                    ii = ii+1
+                    # create analyze folder
+                    ik_file = ik_result_subject_baseline_gc + '/' + file[:-4] + '_C' + str(c) + '.mot'
+                    if not os.path.exists(analyze_result_subject_baseline_gc):
+                        os.makedirs(analyze_result_subject_baseline_gc)
+                    # run analyze
+                    simulatedata.run_analyze(ik_file, analyze_result_subject_baseline_gc)
+
+                    # run simulate imu
+                    # run simulated imu
+                    ximuosim_result_subject_baseline_gc_trial = osimimu_result_subject_baseline_gc + '/' + file[:-4] + '_C' + str(c)
+                    if not os.path.exists(ximuosim_result_subject_baseline_gc_trial):
+                        os.makedirs(ximuosim_result_subject_baseline_gc_trial)
+                    osimimu = simulatedata.run_simulating_imu(analyze_result_subject_baseline_gc, file[:-4] + '_C' + str(c))
+                    simulatedata.export_simulated_imu(osimimu, ximuosim_result_subject_baseline_gc_trial)
+
+                    # # fill updated segmentation label
+                    # segmentation_labels_dic = segmentation_labels[(segmentation_labels['Subject_Num']==subject) & (segmentation_labels['Trial_Num']==file[0:3])].copy()
+                    # segmentation_labels_dic['trial_num_gc'] = file[:-4] + '_C' + str(c)
+                    # segmentation_labels_dic['segment_gc'] = [segment]
+                    # segmentation_labels_dic['side_gc'] = side
+                    # if ii ==0:
+                    #     segmentation_labels_updated = segmentation_labels_dic.copy()
+                    # else:
+                    #     segmentation_labels_updated = segmentation_labels_updated.append(segmentation_labels_dic, ignore_index=True)
+                    # ii = ii+1
 
 
 if save:

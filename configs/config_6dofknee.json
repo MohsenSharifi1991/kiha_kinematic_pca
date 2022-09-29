@@ -1,5 +1,5 @@
 {
-  "dataset_path": "E:/dataset/kiha/",
+  "dataset_path": "H:/dataset/kiha/",
   "dl_dataset": "gaitstairlungestsrom_imuik_S09S10S11S12S13S15S16S17S18S19S20S21S22S23S25S26S27S28S29S30S31S32S33S34S35S36S37S38S39_7sensor_speed_6dofknee.p",
   "gc_dataset": true,
   "xsensimu_sensor_list_all": ["PELVIS",
